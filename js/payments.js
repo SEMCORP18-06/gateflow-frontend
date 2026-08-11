@@ -31,22 +31,142 @@ async function fetchPaymentsData() {
 // ═══════════════════════════════════════════════════════════
 // TALLY PRIME INTEGRATION MODULE (Computer B: 192.168.1.27:9000)
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// TALLY PRIME INTEGRATION MODULE (Computer B: 192.168.1.27:9000)
+// ═══════════════════════════════════════════════════════════
 window.checkTallyStatus = async function() {
+    const statusEl = document.getElementById('tally-prime-status-badge');
+    if (!statusEl) return;
+
+    // 1. Try Direct Browser LAN Connection to 192.168.1.27:9000
+    const xmlCheck = `<ENVELOPE><HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER><BODY><EXPORTDATA><REQUESTDESC><REPORTNAME>List of Accounts</REPORTNAME></REQUESTDESC></EXPORTDATA></BODY></ENVELOPE>`;
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        
+        const directRes = await fetch('http://192.168.1.27:9000', {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/xml' },
+            body: xmlCheck,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (directRes.ok) {
+            statusEl.className = 'badge bg-success text-white';
+            statusEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> 🟢 Tally Connected (Local LAN 192.168.1.27:9000)';
+            fetchTallyPaymentsDirect();
+            return;
+        }
+    } catch (e) {
+        console.log("Direct browser LAN check fallback:", e);
+    }
+
+    // 2. Fallback to Cloud Backend Status
     try {
         const res = await fetch('/api/tally/status');
         const data = await res.json();
-        const statusEl = document.getElementById('tally-prime-status-badge');
-        if (statusEl) {
-            if (data.online) {
-                statusEl.className = 'badge bg-success text-white';
-                statusEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Tally Prime Connected (192.168.1.27:9000)';
-            } else {
-                statusEl.className = 'badge bg-warning text-dark';
-                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Tally Offline';
-            }
+        if (data.online) {
+            statusEl.className = 'badge bg-success text-white';
+            statusEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> 🟢 Tally Connected (192.168.1.27:9000)';
+        } else {
+            statusEl.className = 'badge bg-warning text-dark';
+            statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Tally Offline (Click for Setup)';
         }
     } catch (e) {
-        console.log("Tally status check:", e);
+        statusEl.className = 'badge bg-secondary text-white';
+        statusEl.innerHTML = 'Tally Status Unknown';
+    }
+};
+
+window.fetchTallyPaymentsDirect = async function() {
+    const todayStr = new Date().toISOString().slice(0,10).replace(/-/g, '');
+    const startStr = `${new Date().getFullYear() - 1}0401`;
+
+    const xmlReq = `<ENVELOPE>
+      <HEADER><TALLYREQUEST>Export Data</TALLYREQUEST></HEADER>
+      <BODY>
+        <EXPORTDATA>
+          <REQUESTDESC>
+            <REPORTNAME>Day Book</REPORTNAME>
+            <STATICVARIABLES>
+              <SVEXPORTFORMAT>$$SysName:XML</SVEXPORTFORMAT>
+              <SVFROMDATE>${startStr}</SVFROMDATE>
+              <SVTODATE>${todayStr}</SVTODATE>
+            </STATICVARIABLES>
+          </REQUESTDESC>
+        </EXPORTDATA>
+      </BODY>
+    </ENVELOPE>`;
+
+    try {
+        const res = await fetch('http://192.168.1.27:9000', {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/xml' },
+            body: xmlReq
+        });
+        const xmlText = await res.text();
+        
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+        const vouchers = xmlDoc.getElementsByTagName("VOUCHER");
+
+        const directPayables = [];
+        const directReceivables = [];
+
+        for (let i = 0; i < vouchers.length; i++) {
+            const v = vouchers[i];
+            const vtype = (v.getElementsByTagName("VOUCHERTYPENAME")[0]?.textContent || "").toLowerCase();
+            const party = v.getElementsByTagName("PARTYLEDGERNAME")[0]?.textContent || "Party Ledger";
+            const vnum = v.getElementsByTagName("VOUCHERNUMBER")[0]?.textContent || `VCH-${i+1}`;
+            const amount = Math.abs(parseFloat(v.getElementsByTagName("AMOUNT")[0]?.textContent || 0));
+            const rawDate = v.getElementsByTagName("DATE")[0]?.textContent || "";
+            const fmtDate = rawDate.length === 8 ? `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}` : rawDate;
+            const narr = v.getElementsByTagName("NARRATION")[0]?.textContent || "";
+
+            if (vtype.includes("payment")) {
+                directPayables.push({
+                    id: `tally_direct_${vnum}`,
+                    po_number: "TALLY-VCH",
+                    vendor_name: party,
+                    bill_amount: amount,
+                    amount_paid: amount,
+                    balance_due: 0.0,
+                    payment_date: fmtDate,
+                    payment_mode: "Tally Prime LAN",
+                    transaction_ref: vnum,
+                    status: "Fully Paid",
+                    notes: narr || "Fetched live from local Tally Prime",
+                    is_tally: true
+                });
+            } else if (vtype.includes("receipt")) {
+                directReceivables.push({
+                    id: `tally_direct_rec_${vnum}`,
+                    invoice_number: "TALLY-REC",
+                    customer_name: party,
+                    total_value: amount,
+                    amount_received: amount,
+                    balance_outstanding: 0.0,
+                    receipt_date: fmtDate,
+                    payment_mode: "Tally Prime Receipt",
+                    transaction_ref: vnum,
+                    status: "Fully Collected",
+                    notes: narr || "Receipt fetched live from local Tally Prime",
+                    is_tally: true
+                });
+            }
+        }
+
+        if (directPayables.length > 0) {
+            currentVendorPayables = [...directPayables, ...currentVendorPayables.filter(p => !p.is_tally)];
+            renderVendorPayablesTable(currentVendorPayables);
+        }
+        if (directReceivables.length > 0) {
+            currentCustomerReceivables = [...directReceivables, ...currentCustomerReceivables.filter(r => !r.is_tally)];
+            renderCustomerReceivablesTable(currentCustomerReceivables);
+        }
+    } catch (err) {
+        console.log("Browser direct Tally parse:", err);
     }
 };
 

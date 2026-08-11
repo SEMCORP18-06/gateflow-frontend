@@ -192,7 +192,22 @@ function renderCustomerReceivablesTable(receivables) {
 
     tbody.innerHTML = '';
     if (!receivables || receivables.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding: 24px;">💰 No customer collections recorded yet.</td></tr>`;
+        tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 32px 20px;">
+            <div style="max-width: 500px; margin: 0 auto; background: #F4FBF7; border: 1px solid #BBF7D0; border-radius: 8px; padding: 20px;">
+              <h6 style="font-weight: 700; color: #15803D; margin-bottom: 6px;"><i class="fa-solid fa-server me-2"></i> Tally Prime Receipt Integration Active</h6>
+              <p style="font-size: 13px; color: #475569; margin-bottom: 16px;">
+                Target: <code>http://192.168.1.27:9000</code><br>
+                No customer inward collections recorded yet. Click below to record a collection or refresh from Tally.
+              </p>
+              <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn btn-success btn-sm" onclick="fetchPaymentsData()"><i class="fa-solid fa-rotate me-1"></i> Refresh Collections</button>
+                <button type="button" class="btn btn-outline btn-sm" style="border-color: #15803D; color: #15803D;" onclick="openRecordCustomerReceivableModal()"><i class="fa-solid fa-plus me-1"></i> Record Collection</button>
+              </div>
+            </div>
+          </td>
+        </tr>`;
         return;
     }
 
@@ -202,19 +217,23 @@ function renderCustomerReceivablesTable(receivables) {
         if (r.status === "Partially Collected") badgeClass = "badge-pending";
         if (r.status === "Pending") badgeClass = "badge-overdue";
 
+        const tallyTag = r.is_tally 
+          ? `<span class="badge" style="background:#15803D; color:white; font-size:10px; margin-left:4px;">Tally Receipt</span>` 
+          : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong style="color: #15803D;">${r.invoice_number || '-'}</strong></td>
+            <td><strong style="color: #15803D;">${r.invoice_number || '-'}</strong>${tallyTag}</td>
             <td><strong>${r.customer_name}</strong></td>
             <td>${r.receipt_date || '-'}</td>
             <td><strong>₹ ${(r.total_value || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
             <td><strong style="color: #15803D;">₹ ${(r.amount_received || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
-            <td><strong style="color: #D97706;">₹ ${(r.balance_outstanding || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
+            <td><strong style="color: #DC2626;">₹ ${(r.balance_outstanding || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
             <td><span class="badge ${badgeClass}">${r.status || 'Recorded'}</span></td>
             <td>
                 <div style="display: flex; gap: 6px;">
                     <button type="button" class="btn btn-outline btn-sm" style="border-color: #15803D; color: #15803D;" onclick="viewPaymentDetails('${r.id}', 'receivable')">👁️ Details</button>
-                    <button type="button" class="btn btn-outline btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="deletePaymentRecord('${r.id}', 'receivable')">🗑️ Delete</button>
+                    ${r.is_tally ? '' : `<button type="button" class="btn btn-outline btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="deletePaymentRecord('${r.id}', 'receivable')">🗑️ Delete</button>`}
                 </div>
             </td>
         `;

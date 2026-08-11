@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>SEMCO SCM — GateFlow Receival & Dispatch</title>
+    <link rel="icon" type="image/png" href="/static/assets/semco_logo.png">
+    <link rel="stylesheet" href="/static/css/styles.css?v=35">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="brand">
+            <img src="/static/assets/semco_logo.png" alt="SEMCO Logo" class="brand-logo-img">
+            <div class="brand-title">
+                <h1>GateFlow SCM</h1>
+                <div class="brand-subtitle">Solving Today, Shaping Tomorrow</div>
+            </div>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 10px; align-items: center;">
+            <div id="active-profile-pill" class="profile-pill" style="display: none;">
+                <span id="active-profile-icon">👤</span>
+                <span id="active-profile-name"></span>
+            </div>
+            <button class="btn btn-outline btn-sm" id="btn-logout" onclick="logoutUser()" style="display: none; color: #DC2626; border-color: #FCA5A5;">
+                🚪 Logout
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="triggerPaymentCheck()">
+                ⚡ Daily Check
+            </button>
+        </div>
+    </header>
+
+    <!-- Top Module Navigation Bar (Desktop & Mobile Module Bar) -->
+    <nav id="top-module-nav" class="top-module-nav" style="display: none;">
+        <button class="top-nav-item" id="top-nav-dashboard" onclick="switchMainTab('admin-dashboard-tab', this)">
+            <span class="icon">📊</span> <span>Master Dashboard</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-po" onclick="switchMainTab('po-tab', this)">
+            <span class="icon">📋</span> <span>1. Purchase Orders</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-receiving" onclick="switchMainTab('receiving-tab', this)">
+            <span class="icon">📥</span> <span>2. Receiving Desk</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-project-engineer" onclick="switchMainTab('project-engineer-tab', this)">
+            <span class="icon">📐</span> <span>3. Project Engineer</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-payments" onclick="switchMainTab('payments-tab', this)">
+            <span class="icon">💳</span> <span>4. Payments Desk & Treasury</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-qc" onclick="switchMainTab('qc-tab', this)">
+            <span class="icon">🛡️</span> <span>5. QC Gate Approval</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-dispatch" onclick="switchMainTab('dispatch-tab', this)">
+            <span class="icon">🚚</span> <span>6. Dispatch Desk</span>
+        </button>
+        <button class="top-nav-item" id="top-nav-audit" onclick="switchMainTab('audit-tab', this)">
+            <span class="icon">🔔</span> <span>7. Audit & Logs</span>
+        </button>
+    </nav>
+
+    <!-- Main Content Container -->
+    <main>
+
+        <!-- 0. DEDICATED 3-PROFILE LOGIN PAGE -->
+        <section id="login-tab" class="tab-content active">
+            <div class="login-page-card">
+                <div class="login-header">
+                    <img src="/static/assets/semco_logo.png" alt="SEMCO Logo" class="login-logo">
+                    <h2>GateFlow SCM Authentication Portal</h2>
+                    <div class="login-tagline">Solving Today, Shaping Tomorrow — Sign In to Your Dedicated Profile</div>
+                </div>
+
+                <div class="profile-grid">
+                    <!-- Profile 1: SEMCO Purchase Orders Desk Sign In -->
+                    <div class="profile-card" style="border-top: 5px solid #1E3A8A; background: #EFF6FF;">
+                        <div class="profile-avatar" style="border: 2px solid #1E3A8A;">📋</div>
+                        <span class="profile-badge" style="background: #DBEAFE; color: #1E40AF;">Module 1</span>
+                        <h3 style="color: #1E40AF;">Purchase Orders Desk</h3>
+                        <p>Project Autofill, PO Builder, Submission & Approval</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'po_preparer')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-po_preparer" class="form-control" value="poprep@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-po_preparer" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-po_preparer', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);">
+                                📋 Sign In to Purchase Orders Desk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 2: Receiving Desk Sign In -->
+                    <div class="profile-card profile-receiving">
+                        <div class="profile-avatar">📥</div>
+                        <span class="profile-badge badge-receiving">Module 2</span>
+                        <h3>Receiving Desk</h3>
+                        <p>Goods Inward & Payables Management</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'receiving')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-receiving" class="form-control" value="receiving@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-receiving" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-receiving', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                🔐 Sign In to Receiving Desk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 2B: Project Engineer Desk Sign In -->
+                    <div class="profile-card" style="border-top: 5px solid #7C3AED; background: #F5F3FF;">
+                        <div class="profile-avatar" style="border: 2px solid #7C3AED; background: #EDE9FE; color: #6D28D9;">📐</div>
+                        <span class="profile-badge" style="background: #DDD6FE; color: #5B21B6;">Module 3</span>
+                        <h3 style="color: #5B21B6;">Project Engineer Desk</h3>
+                        <p>Multi-File Upload, Categories & QC Approval</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'project_engineer')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-project_engineer" class="form-control" value="engineer@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-project_engineer" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-project_engineer', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%);">
+                                📐 Sign In to Project Engineer Desk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 3: QC Admin Sign In -->
+                    <div class="profile-card profile-qc">
+                        <div class="profile-avatar">🛡️</div>
+                        <span class="profile-badge badge-qc">QC & Audit</span>
+                        <h3>QC Admin Desk</h3>
+                        <p>Quality Control Gate & Audit Trail</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'qc_admin')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-qc_admin" class="form-control" value="qcadmin@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-qc_admin" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-qc_admin', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #0F172A 0%, #334155 100%);">
+                                🔐 Sign In to QC Admin
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 4: Dispatch Desk Sign In -->
+                    <div class="profile-card profile-dispatch">
+                        <div class="profile-avatar">🚚</div>
+                        <span class="profile-badge badge-dispatch">Module 4</span>
+                        <h3>Dispatch Desk</h3>
+                        <p>Tri-Party Logistics & Client Collections</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'dispatch')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-dispatch" class="form-control" value="dispatch@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-dispatch" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-dispatch', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: var(--semco-green-gradient);">
+                                🔐 Sign In to Dispatch Desk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 4B: Payments Desk (Treasury) Sign In -->
+                    <div class="profile-card" style="border-top: 5px solid #0F172A; background: #F8FAFC;">
+                        <div class="profile-avatar" style="border: 2px solid #1E3A8A; background: #EFF6FF; color: #1E3A8A;">💳</div>
+                        <span class="profile-badge" style="background: #E2E8F0; color: #0F172A;">Module 4</span>
+                        <h3 style="color: #0F172A;">Payments Desk (Treasury)</h3>
+                        <p>Vendor Payables (Paying) & Customer Receivables (Receiving)</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'payments')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-payments" class="form-control" value="admin@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-payments" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-payments', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);">
+                                💳 Sign In to Payments Desk
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Profile 4: Master Admin Portal Sign In -->
+                    <div class="profile-card" style="border-top: 5px solid #D97706; background: #FFFBEB;">
+                        <div class="profile-avatar" style="border: 2px solid #F59E0B;">👑</div>
+                        <span class="profile-badge" style="background: #FEF3C7; color: #B45309;">Full Access</span>
+                        <h3 style="color: #92400E;">Master Admin Portal</h3>
+                        <p>Full System Access to All 5 Modules Anywhere</p>
+
+                        <form onsubmit="handleAuthSubmit(event, 'admin')" style="width: 100%; text-align: left;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                <input type="email" id="auth-email-admin" class="form-control" value="admin@semco.com" required style="padding: 6px 10px; font-size: 0.85rem;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 14px;">
+                                <label class="form-label" style="font-size: 0.75rem;">Password</label>
+                                <div style="position: relative; display: flex; align-items: center;">
+                                    <input type="password" id="auth-pass-admin" class="form-control" value="pass123" required style="padding: 6px 36px 6px 10px; font-size: 0.85rem;">
+                                    <button type="button" onclick="togglePasswordVisibility('auth-pass-admin', this)" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.05rem; padding: 4px; color: var(--text-muted);" title="Show/Hide Password">👁️</button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-block" style="background: linear-gradient(135deg, #D97706 0%, #B45309 100%);">
+                                👑 Sign In as Master Admin
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 1. RECEIVING MODULE TAB -->
+        <section id="receiving-tab" class="tab-content">
+            <!-- Receiving Sub-Navigation Bar (4 Sections) -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid rgba(0, 59, 150, 0.08); padding-bottom: 12px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-primary rec-subnav-btn" id="rec-subnav-challan-btn" onclick="switchReceivingSubtab('challan')">
+                    📜 1. Delivery Challan
+                </button>
+                <button type="button" class="btn btn-outline rec-subnav-btn" id="rec-subnav-challan-invoice-btn" onclick="switchReceivingSubtab('challan-invoice')">
+                    📜📄 2. Delivery Challan + Invoice
+                </button>
+                <button type="button" class="btn btn-outline rec-subnav-btn" id="rec-subnav-invoice-after-btn" onclick="switchReceivingSubtab('invoice-after')">
+                    📄 3. Invoice After Delivery Challan
+                </button>
+                <button type="button" class="btn btn-outline rec-subnav-btn" id="rec-subnav-invoices-date-btn" onclick="switchReceivingSubtab('invoices-by-date')">
+                    📅 4. Only Invoices Inward Register (By Inward Date)
+                </button>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- SECTION 1: DELIVERY CHALLAN ONLY                          -->
+            <!-- ========================================================= -->
+            <!-- ========================================================= -->
+            <!-- SECTION 1: DELIVERY CHALLAN ONLY                          -->
+            <!-- ========================================================= -->
+            <div id="rec-section-challan">
+                
+                <!-- Section 1 Action Banner -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFBEB; border: 1px solid #FDE68A; padding: 12px 16px; border-radius: 12px; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong style="color: #92400E; font-size: 0.95rem;">📜 Module 1: Delivery Challan Logging</strong>
+                        <div style="font-size: 0.8rem; color: #B45309;">Log material arrivals that come with Delivery Challan only.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('challan-ocr-input').click()" style="border-color: var(--semco-blue); color: var(--semco-blue); background: #FFF;">📷 OCR Scan Challan</button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="focusSection1ManualForm()" style="background: linear-gradient(135deg, #D97706 0%, #B45309 100%);">✍️ Direct Manual Entry Mode</button>
+                    </div>
+                </div>
+
+                <div class="card" id="s1-manual-card">
+                    <div class="card-title">
+                        <span>📜 Delivery Challan Manual Entry — Material Arrival</span>
+                        <span class="badge badge-draft">Section 1 Manual</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Enter Delivery Challan details manually below. You can also add custom dynamic fields and attach the challan document/photo.
+                    </p>
+
+                    <input type="file" id="challan-ocr-input" accept="image/*,.pdf" style="display:none;" onchange="handleChallanOCR(this, 'challan')">
+
+                    <form id="challan-only-form">
+                        <input type="hidden" id="ch1-document-path" value="">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Delivery Challan Number *</label>
+                                <input type="text" id="ch1-challan-number" class="form-control" required placeholder="e.g. DC/26-27/045">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Challan Date *</label>
+                                <input type="date" id="ch1-challan-date" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Vendor / Supplier Name *</label>
+                                <input type="text" id="ch1-vendor-name" class="form-control" required placeholder="e.g. Apex Steels Ltd">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">PO / Reference Number</label>
+                                <input type="text" id="ch1-po-number" class="form-control" placeholder="e.g. PO-2026-001">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Transporter / Carrier</label>
+                                <input type="text" id="ch1-transporter" class="form-control" placeholder="e.g. Express Logistics">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Vehicle Number</label>
+                                <input type="text" id="ch1-vehicle" class="form-control" placeholder="e.g. MH-04-AB-1234">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Goods & Material Description</label>
+                            <textarea id="ch1-items-summary" class="form-control" rows="2" placeholder="e.g. 50 Bundles Stainless Steel Rods (Grade 304), 200 KG MS Plates"></textarea>
+                        </div>
+
+                        <!-- Section 1 Custom Fields & Notes -->
+                        <div style="background: #FFF7ED; padding: 14px; border-radius: 12px; border: 1px solid #FED7AA; margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #92400E; font-size: 0.9rem;">📝 Custom Fields & Notes</strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addSection1CustomField()" style="border-color: #D97706; color: #D97706;">+ Add Field</button>
+                            </div>
+                            <div id="s1-custom-fields-container"></div>
+                        </div>
+
+                        <!-- Section 1 File & Camera Attachment -->
+                        <div class="form-group" style="background: #FFFBEB; padding: 12px; border-radius: 8px; border: 1px solid #FDE68A; margin-bottom: 16px;">
+                            <label class="form-label" style="color: #92400E; font-weight: 700;">📎 Attach Delivery Challan Document (Photo / PDF)</label>
+                            <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ch1-camera-input').click()" style="border-color: #D97706; color: #D97706; background: #FFFFFF;">📱 📷 Snap Challan Photo</button>
+                            </div>
+                            <input type="file" id="ch1-file-input" accept="image/*,.pdf" class="form-control">
+                            <input type="file" id="ch1-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleSection1CameraUpload(this)">
+                            <div id="ch1-file-badge" style="display:none; margin-top:8px;">
+                                <span class="badge badge-verified" id="ch1-file-name">File attached</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">📜 Save Delivery Challan Record</button>
+                    </form>
+                </div>
+
+                <!-- Challan-Only Repository -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📜 Delivery Challans Repository</span>
+                        <div>
+                            <span class="badge badge-pending" id="challan-pending-invoice-count" style="margin-right: 6px;">0 Awaiting Invoice</span>
+                            <button class="btn btn-outline btn-sm" onclick="exportData('challans', 'csv')">Export CSV</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Challan #</th>
+                                    <th>Vendor</th>
+                                    <th>Date</th>
+                                    <th>Transporter</th>
+                                    <th>Goods Summary</th>
+                                    <th>Invoice Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="challans-table-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- SECTION 2: DELIVERY CHALLAN + INVOICE (Together)           -->
+            <!-- ========================================================= -->
+            <div id="rec-section-challan-invoice" style="display: none;">
+                
+                <!-- Main Header Banner for Section 2 -->
+                <div style="background: linear-gradient(135deg, #1E3A8A 0%, #0284C7 100%); color: white; padding: 18px 22px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                📜📄 Section 2: Delivery Challan + Invoice Processing
+                            </h3>
+                            <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9;">
+                                Process combined material arrivals containing both a Delivery Challan and a Vendor Invoice.
+                            </p>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn btn-outline" onclick="showManualEntryForm()" style="background: rgba(255,255,255,0.15); color: white; border-color: rgba(255,255,255,0.4); font-size: 0.85rem;">
+                                ✍️ Direct Manual Combined Entry
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    
+                    <!-- ========================================== -->
+                    <!-- PART A: DELIVERY CHALLAN SECTION          -->
+                    <!-- ========================================== -->
+                    <div class="card" style="border-left: 5px solid #F59E0B; background: #FFFDF5;">
+                        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="color: #B45309; font-size: 1.05rem;">📜 PART A — Delivery Challan Information</span>
+                            <span class="badge" style="background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A;">1. Challan Details</span>
+                        </div>
+                        <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">
+                            Enter the details from the physical Delivery Challan accompanying the shipment.
+                        </p>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Delivery Challan Number *</label>
+                                <input type="text" id="rec-challan-number" name="challan_number" class="form-control" placeholder="e.g. DC/26-27/045" form="receiving-save-form" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Challan Date *</label>
+                                <input type="date" id="rec-challan-date" name="challan_date" class="form-control" form="receiving-save-form" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Transporter / Carrier Name</label>
+                                <input type="text" id="rec-challan-transporter" name="transporter_name" class="form-control" placeholder="e.g. Express Logistics Pvt Ltd" form="receiving-save-form">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Vehicle Registration Number</label>
+                                <input type="text" id="rec-challan-vehicle" name="vehicle_number" class="form-control" placeholder="e.g. MH-12-AB-9876" form="receiving-save-form">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Goods & Material Summary (Challan)</label>
+                            <input type="text" id="rec-challan-goods" name="challan_goods_summary" class="form-control" placeholder="e.g. 50 Bundles SS Rods Grade 304" form="receiving-save-form">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 12px; background: #FEF3C7; padding: 12px; border-radius: 8px; border: 1px solid #FDE68A;">
+                            <label class="form-label" style="color: #92400E; font-weight: 700;">📎 Attach Delivery Challan Document (Photo / PDF)</label>
+                            <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="triggerChallanMobileCamera()" style="border-color: #D97706; color: #D97706; background: #FFFFFF;">📱 📷 Snap Challan Photo</button>
+                            </div>
+                            <input type="file" id="rec-challan-file-input" accept="image/*,.pdf" class="form-control" onchange="handleChallanFileUpload(this)">
+                            <input type="file" id="rec-challan-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleChallanCameraUpload(this)">
+                            <input type="hidden" id="rec-challan-doc-path" name="challan_doc_path" form="receiving-save-form" value="">
+                            <div id="rec-challan-file-badge" style="display:none; margin-top: 8px;">
+                                <span class="badge badge-verified" id="rec-challan-file-name">✅ Challan Document Attached</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========================================== -->
+                    <!-- PART B: INVOICE & OCR SECTION              -->
+                    <!-- ========================================== -->
+                    <div class="card" style="border-left: 5px solid #2563EB;">
+                        <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <span style="color: #1E40AF; font-size: 1.05rem;">📄 PART B — Vendor Invoice & OCR Scan</span>
+                            <span class="badge badge-verified">2. Invoice Details</span>
+                        </div>
+                        <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">
+                            Upload or snap a photo of the Vendor Invoice for instant OCR extraction.
+                        </p>
+
+                        <!-- Buttons for Upload / Camera -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-primary" onclick="triggerMobileCamera()">📱 📷 Snap Invoice Photo</button>
+                            <button type="button" class="btn btn-outline" onclick="openLiveCameraModal()">🎥 Open Live Camera</button>
+                        </div>
+
+                        <!-- Hidden Camera Input -->
+                        <input type="file" id="ocr-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleCameraUpload(this)">
+
+                        <!-- OCR Scan Form -->
+                        <form id="ocr-upload-form" enctype="multipart/form-data" style="background: #F8FAFC; padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 18px;">
+                            <div class="form-group" style="margin-bottom: 10px;">
+                                <label class="form-label">Upload Invoice File (PDF, JPEG, PNG)</label>
+                                <input type="file" id="ocr-file-input" accept="image/*,.pdf" class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-outline" id="btn-ocr-scan" style="width: 100%; border-color: var(--semco-blue); color: var(--semco-blue); font-weight: 600;">
+                                🔍 Scan Selected Invoice & Extract Metadata
+                            </button>
+                        </form>
+
+                        <!-- Extracted / Editable Invoice Form (Receiving Save Form) -->
+                        <form id="receiving-save-form">
+                            <input type="hidden" id="rec-id" name="id">
+                            <input type="hidden" id="rec-document-path" name="document_path">
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <strong style="color: var(--semco-blue); font-size: 0.95rem;">📝 Extracted Invoice Metadata</strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="previewCurrentOCRScan()" style="border-color: var(--semco-blue); color: var(--semco-blue);">👁️ Document Preview</button>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Number *</label>
+                                    <input type="text" id="rec-invoice-number" name="invoice_number" class="form-control" required placeholder="e.g. INV/26-27/160">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Vendor Name *</label>
+                                    <input type="text" id="rec-vendor-name" name="vendor_name" class="form-control" required placeholder="e.g. Jay Shree Krishna Pressing Works">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Date *</label>
+                                    <input type="date" id="rec-invoice-date" name="invoice_date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Due Date *</label>
+                                    <input type="date" id="rec-due-date" name="due_date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Total Amount (₹) *</label>
+                                    <input type="number" step="0.01" id="rec-total-amount" name="total_amount" class="form-control" required placeholder="e.g. 15930.00">
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 16px; margin-bottom: 10px; font-weight: 700; color: var(--semco-blue); font-size: 0.9rem;">
+                                📋 Dynamically Extracted Document Headings & Metadata
+                            </div>
+                            <div id="dynamic-fields-container" class="form-row" style="margin-bottom: 16px;"></div>
+                            <input type="hidden" id="rec-extracted-fields-json" name="extracted_fields_json">
+
+                            <div style="display: flex; gap: 12px; margin-top: 20px;">
+                                <button type="submit" class="btn btn-primary" id="btn-save-receiving" style="padding: 12px 24px; font-size: 1rem; font-weight: 700;">
+                                    💾 Save Combined (Delivery Challan + Invoice) Record
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                </div>
+
+                <!-- Manual Entry Card (kept here — shared) -->
+                <div class="card" id="manual-entry-card" style="display: none;">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <span>✍️ Manual Invoice + Challan Entry</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button type="button" class="btn btn-outline btn-sm" onclick="hideManualEntryForm()" style="border-color: #EF4444; color: #EF4444;">✖ Cancel</button>
+                            <span class="badge badge-pending">Manual</span>
+                        </div>
+                    </div>
+                    <form id="manual-entry-form">
+                        <input type="hidden" id="manual-document-path" value="">
+
+                        <!-- Challan Reference -->
+                        <div style="background: #FFFBEB; padding: 14px; border-radius: 12px; border: 1px solid #FDE68A; margin-bottom: 14px;">
+                            <strong style="color: #92400E; font-size: 0.9rem; display: block; margin-bottom: 10px;">📜 Delivery Challan Reference</strong>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Challan Number</label>
+                                    <input type="text" id="manual-challan-number" class="form-control" placeholder="e.g. DC/26-27/045">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Challan Date</label>
+                                    <input type="date" id="manual-challan-date" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 8px;">
+                                <label class="form-label" style="color: #92400E; font-weight: 600;">📎 Attach Delivery Challan Document (Photo / PDF)</label>
+                                <input type="file" id="manual-challan-file-input" accept="image/*,.pdf" class="form-control" style="margin-bottom: 6px;" onchange="handleManualChallanFileUpload(this)">
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('manual-challan-camera-input').click()" style="border-color: #D97706; color: #D97706; background: #FFF;">📱 Snap Challan Photo</button>
+                                </div>
+                                <input type="file" id="manual-challan-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleManualChallanFileUpload(this)">
+                                <input type="hidden" id="manual-challan-doc-path" value="">
+                                <div id="manual-challan-file-preview" style="margin-top: 8px; display: none;">
+                                    <span class="badge badge-verified" id="manual-challan-file-name">Challan Attached</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Core Invoice Fields -->
+                        <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">📄 Invoice & Reference Details</strong>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Number *</label>
+                                    <input type="text" id="manual-invoice-number" class="form-control" required placeholder="e.g. INV/26-27/160">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Invoice Date *</label>
+                                    <input type="date" id="manual-invoice-date" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Due Date</label>
+                                    <input type="date" id="manual-due-date" class="form-control">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">PO Number</label>
+                                    <input type="text" id="manual-po-number" class="form-control" placeholder="e.g. PO-2026-001">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Details -->
+                        <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">🏭 Vendor / Supplier Details</strong>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Vendor Name *</label>
+                                    <input type="text" id="manual-vendor-name" class="form-control" required placeholder="e.g. Jay Shree Krishna Pressing Works">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Vendor GSTIN</label>
+                                    <input type="text" id="manual-vendor-gstin" class="form-control" placeholder="e.g. 27AVIPM8455C1ZD">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Vendor Phone</label>
+                                    <input type="text" id="manual-vendor-phone" class="form-control" placeholder="e.g. 9881355008">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Vendor Email</label>
+                                    <input type="email" id="manual-vendor-email" class="form-control" placeholder="e.g. vendor@example.com">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Vendor Address</label>
+                                <input type="text" id="manual-vendor-address" class="form-control" placeholder="Full vendor address">
+                            </div>
+                        </div>
+
+                        <!-- Receiver Details -->
+                        <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">🏢 Order Received By (Billed To)</strong>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Receiver Company Name</label>
+                                    <input type="text" id="manual-receiver-name" class="form-control" value="SEMCORP PROCESS AND VACUUM SYSTEMS PRIVATE LIMITED">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Receiver GSTIN</label>
+                                    <input type="text" id="manual-receiver-gstin" class="form-control" value="27ABRCS0246H1Z3">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Details -->
+                        <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 14px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">💰 Financial & Tax Breakdown</strong>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Total Amount (₹) *</label>
+                                    <input type="number" step="0.01" id="manual-total-amount" class="form-control" required placeholder="e.g. 15930.00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Subtotal (Before Tax)</label>
+                                    <input type="text" id="manual-subtotal" class="form-control" placeholder="e.g. ₹ 13,500.00">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">CGST Amount</label>
+                                    <input type="text" id="manual-cgst" class="form-control" placeholder="e.g. ₹ 1,215.00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">SGST Amount</label>
+                                    <input type="text" id="manual-sgst" class="form-control" placeholder="e.g. ₹ 1,215.00">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Total Tax Amount</label>
+                                    <input type="text" id="manual-total-tax" class="form-control" placeholder="e.g. ₹ 2,430.00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Custom Fields Section -->
+                        <div style="background: #FFF7ED; padding: 14px; border-radius: 12px; border: 1px solid #FED7AA; margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #92400E; font-size: 0.9rem;">📝 Custom Fields & Notes</strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addManualCustomField()" style="border-color: #D97706; color: #D97706;">+ Add Field</button>
+                            </div>
+                            <div id="manual-custom-fields-container"></div>
+                        </div>
+
+                        <!-- File Upload -->
+                        <div style="background: #EFF6FF; padding: 14px; border-radius: 12px; border: 1px solid #BFDBFE; margin-bottom: 14px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">📎 Attach Invoice Document</strong>
+                            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">Upload the original invoice file (PDF, JPEG, PNG) or snap a photo.</p>
+                            <input type="file" id="manual-file-input" accept="image/*,.pdf" class="form-control" style="margin-bottom: 8px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="triggerManualCameraCapture()" style="border-color: var(--semco-blue); color: var(--semco-blue);">📱 Snap with Camera</button>
+                            </div>
+                            <input type="file" id="manual-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleManualCameraCapture(this)">
+                            <div id="manual-file-preview" style="margin-top: 10px; display: none;">
+                                <span class="badge badge-verified" id="manual-file-name">File attached</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; margin-top: 16px;">
+                            <button type="submit" class="btn btn-primary">💾 Save Challan + Invoice Record</button>
+                            <button type="button" class="btn btn-outline" onclick="hideManualEntryForm()">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Combined Records Repository -->
+                <div class="card">
+                    <div class="card-title">
+                        <span>📦 Challan + Invoice Records Repository</span>
+                        <div>
+                            <button class="btn btn-outline btn-sm" onclick="exportData('receiving', 'csv')">Export CSV</button>
+                            <button class="btn btn-outline btn-sm" onclick="exportData('receiving', 'xlsx')">Export Excel</button>
+                            <button class="btn btn-outline btn-sm" onclick="exportData('receiving', 'pdf')">Export PDF</button>
+                        </div>
+                    </div>
+
+                    <!-- Payables Multi-Attribute Category & Filter Control Bar for Section 2 -->
+                    <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.9rem; display: flex; align-items: center; gap: 6px;">
+                                🔍 Categorize & Filter Inward Invoices
+                            </strong>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="resetSection2PayablesFilters()" style="border-color: #64748B; color: #64748B; background: #FFF; font-weight: 600;">
+                                🔄 Reset
+                            </button>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                            <!-- 1. Invoice No Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">1. Invoice No</label>
+                                <input type="text" id="sec2-filter-inv" class="form-control" placeholder="Search Invoice #" style="font-size: 0.82rem;" oninput="applySection2PayablesFilter()">
+                            </div>
+
+                            <!-- 2. Date Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">2. Date</label>
+                                <input type="date" id="sec2-filter-date" class="form-control" style="font-size: 0.82rem;" onchange="applySection2PayablesFilter()">
+                            </div>
+
+                            <!-- 3. PO No Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">3. PO No</label>
+                                <input type="text" id="sec2-filter-po" class="form-control" placeholder="Search PO #" style="font-size: 0.82rem;" oninput="applySection2PayablesFilter()">
+                            </div>
+
+                            <!-- 4. Payment Terms / Due Status Filter -->
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">4. Payment Terms / Due Status</label>
+                                <select id="sec2-filter-due" class="form-control" style="font-size: 0.82rem;" onchange="applySection2PayablesFilter()">
+                                    <option value="ALL">All Terms & Statuses</option>
+                                    <option value="OVERDUE">⚠️ Overdue</option>
+                                    <option value="DUE_7">⏳ Due in 7 Days</option>
+                                    <option value="DUE_30">📅 Due in 30 Days</option>
+                                    <option value="PARTIAL">⌛ Partially Paid</option>
+                                    <option value="PAID">✅ Fully Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Invoice #</th>
+                                    <th>Challan #</th>
+                                    <th>Vendor</th>
+                                    <th>Due Date</th>
+                                    <th>Amount</th>
+                                    <th>Attached Docs & Logs</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="receiving-table-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- SECTION 3: INVOICE AFTER DELIVERY CHALLAN                 -->
+            <!-- ========================================================= -->
+            <div id="rec-section-invoice-after" style="display: none;">
+                
+                <!-- Section 3 Top Action Banner -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #F0FDF4; border: 1px solid #86EFAC; padding: 14px 18px; border-radius: 14px; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div>
+                        <strong style="color: #166534; font-size: 1rem; display: flex; align-items: center; gap: 6px;">📄 Module 3: Subsequent Invoice Linking & Logging</strong>
+                        <div style="font-size: 0.82rem; color: #047857; margin-top: 2px;">Link a late-arriving vendor invoice to a previously logged Delivery Challan.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('s3-invoice-file').click()" style="border-color: #059669; color: #059669; background: #FFF; font-weight: 600;">📷 Scan / Upload Invoice (OCR)</button>
+                        <input type="file" id="s3-invoice-file" accept="image/*,.pdf" style="display:none;" onchange="handleSection3InvoiceUpload(this)">
+                    </div>
+                </div>
+
+                <div class="card" style="border-left: 5px solid #059669; background: #FFFFFF;">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #065F46; font-size: 1.1rem;">📄 Invoice Details & Delivery Challan Link</span>
+                        <span class="badge" style="background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0;">Section 3 Active</span>
+                    </div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                        Select a pending Delivery Challan from the list below (or type a Challan Number manually), fill in the invoice details, and click <strong>Save</strong>.
+                    </p>
+
+                    <!-- Delivery Challan Link Box -->
+                    <div style="background: #FFFBEB; padding: 16px; border-radius: 12px; border: 1px solid #FDE68A; margin-bottom: 18px;">
+                        <strong style="color: #92400E; font-size: 0.92rem; display: block; margin-bottom: 8px;">📜 Step 1: Select or Enter Delivery Challan *</strong>
+                        
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 2;">
+                                <label class="form-label" style="font-size: 0.78rem; color: #78350F;">Select Pending Delivery Challan from System List</label>
+                                <select id="s3-challan-select" class="form-control" onchange="handleSection3ChallanSelectChange(this)">
+                                    <option value="">-- Select a Delivery Challan awaiting invoice --</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label class="form-label" style="font-size: 0.78rem; color: #78350F;">OR Enter Challan # Manually</label>
+                                <input type="text" id="s3m-manual-challan-number" class="form-control" placeholder="e.g. DC/26-27/045">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="refreshPendingChallansDropdown()" style="border-color: #D97706; color: #D97706; background: #FFFFFF;">🔄 Refresh Pending Challans</button>
+                    </div>
+
+                    <!-- Invoice Data Entry Form -->
+                    <div style="background: #F0FDF4; padding: 18px; border-radius: 12px; border: 1px solid #86EFAC; margin-bottom: 18px;">
+                        <strong style="color: #166534; font-size: 0.95rem; display: block; margin-bottom: 14px;">📄 Step 2: Invoice Information & Amount</strong>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Invoice Number *</label>
+                                <input type="text" id="s3m-invoice-number" class="form-control" required placeholder="e.g. INV/26-27/160">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Invoice Date *</label>
+                                <input type="date" id="s3m-invoice-date" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" id="s3m-due-date" class="form-control">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Vendor Name *</label>
+                                <input type="text" id="s3m-vendor-name" class="form-control" required placeholder="e.g. Apex Steels Ltd">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Total Amount (₹) *</label>
+                                <input type="number" step="0.01" id="s3m-total-amount" class="form-control" required placeholder="e.g. 75000.00">
+                            </div>
+                        </div>
+
+                        <!-- Section 3 Custom Fields & Notes -->
+                        <div style="background: #FFFFFF; padding: 14px; border-radius: 10px; border: 1px solid #A7F3D0; margin-bottom: 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #166534; font-size: 0.88rem;">📝 Custom Fields & Notes</strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addSection3CustomField()" style="border-color: #059669; color: #059669;">+ Add Field</button>
+                            </div>
+                            <div id="s3-manual-custom-fields-container"></div>
+                        </div>
+
+                        <!-- Section 3 Document Attachment -->
+                        <div class="form-group" style="background: #FFFFFF; padding: 14px; border-radius: 10px; border: 1px solid #A7F3D0; margin-bottom: 16px;">
+                            <label class="form-label" style="color: #166534; font-weight: 700;">📎 Attach Invoice Document (Photo / PDF)</label>
+                            <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('s3m-camera-input').click()" style="border-color: #059669; color: #059669; background: #FFFFFF;">📱 📷 Snap Invoice Photo</button>
+                            </div>
+                            <input type="file" id="s3m-file-input" accept="image/*,.pdf" class="form-control">
+                            <input type="file" id="s3m-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleSection3CameraUpload(this)">
+                            <div id="s3m-file-badge" style="display:none; margin-top:8px;">
+                                <span class="badge badge-verified" id="s3m-file-name">File attached</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="s3m-document-path" value="">
+
+                        <!-- MAIN PROMINENT SAVE BUTTON FOR SECTION 3 -->
+                        <div style="display: flex; gap: 12px; justify-content: flex-start; margin-top: 18px;">
+                            <button type="button" class="btn btn-primary" onclick="saveSection3ManualInvoice()" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); font-size: 1rem; padding: 12px 24px;">
+                                💾 Link Invoice to Delivery Challan & Save Record
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Linked Records Table -->
+                    <div class="card" style="margin-top: 16px;">
+                        <div class="card-title">
+                            <span>📄 Invoices Linked to Delivery Challans</span>
+                            <span class="badge badge-verified">Linked</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Invoice #</th>
+                                        <th>Linked Challan #</th>
+                                        <th>Vendor</th>
+                                        <th>Amount</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="linked-invoices-table-body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            <!-- ========================================================= -->
+            <!-- SECTION 4: ONLY INVOICES (CATEGORIZED BY INWARD DATE)    -->
+            <!-- ========================================================= -->
+            <div id="rec-section-invoices-by-date" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; background: #EFF6FF; border: 1px solid #93C5FD; padding: 16px 20px; border-radius: 14px; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+                    <div>
+                        <strong style="color: #1E40AF; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">📅 Only Invoices Inward Register (Date Categorized)</strong>
+                        <div style="font-size: 0.83rem; color: #1D4ED8; margin-top: 2px;">Chronological register of all inward invoices categorized and documented strictly by Inward Receipt Date.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                        <input type="date" id="invoices-date-filter" class="form-control" style="font-size: 0.85rem; padding: 6px 12px; width: 170px;" onchange="filterInvoicesByInwardDate(this.value)">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setInvoicesDateQuickFilter('ALL')" style="border-color: #2563EB; color: #2563EB; background: #FFF; font-weight: 600;">All Dates</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setInvoicesDateQuickFilter('TODAY')" style="border-color: #2563EB; color: #2563EB; background: #FFF; font-weight: 600;">Today</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setInvoicesDateQuickFilter('THIS_WEEK')" style="border-color: #2563EB; color: #2563EB; background: #FFF; font-weight: 600;">This Week</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setInvoicesDateQuickFilter('THIS_MONTH')" style="border-color: #2563EB; color: #2563EB; background: #FFF; font-weight: 600;">This Month</button>
+                    </div>
+                </div>
+
+                <!-- Date Category Summary Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                    <div class="card" style="margin-bottom:0; border-left: 4px solid #2563EB; background: #F8FAFC;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Inward Invoices</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #1E40AF; margin-top: 4px;" id="invoices-date-total-count">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Filtered Category</div>
+                    </div>
+                    <div class="card" style="margin-bottom:0; border-left: 4px solid #059669; background: #F8FAFC;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Total Inward Amount</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #065F46; margin-top: 4px;" id="invoices-date-total-amount">₹ 0.00</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Sum of Invoiced Goods</div>
+                    </div>
+                    <div class="card" style="margin-bottom:0; border-left: 4px solid #D97706; background: #F8FAFC;">
+                        <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Unique Vendors</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #92400E; margin-top: 4px;" id="invoices-date-vendor-count">0</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Suppliers Documented</div>
+                    </div>
+                </div>
+
+                <!-- Inward Date Grouped Container -->
+                <div id="invoices-date-grouped-container">
+                    <!-- Rendered dynamically by JS into Date Group Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. PROJECT ENGINEER DESK TAB -->
+        <section id="project-engineer-tab" class="tab-content">
+            <div style="background: linear-gradient(135deg, #4C1D95 0%, #7C3AED 100%); color: white; padding: 20px 24px; border-radius: 14px; margin-bottom: 22px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.2);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+                            📐 Module 3: Project Engineer Desk
+                        </h3>
+                        <p style="margin: 4px 0 0 0; font-size: 0.88rem; opacity: 0.9;">
+                            Upload multi-file technical packages, tag manual categories for each file, and store in project repository.
+                        </p>
+                    </div>
+                    <div>
+                        <span class="badge" style="background: rgba(255,255,255,0.2); color: #FFF; border: 1px solid rgba(255,255,255,0.4); font-size: 0.85rem; padding: 6px 12px;">
+                            Engineer Profile Active
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Engineer Package Upload Form -->
+            <div class="card" style="border-top: 5px solid #7C3AED;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #5B21B6; font-size: 1.1rem;">📁 Create New Project Engineering Package</span>
+                    <span class="badge badge-verified">Direct Logging Mode</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">
+                    Attach multiple engineering documents (drawings, test certs, MTCs, compliance sheets) and manually classify each file for persistent storage.
+                </p>
+
+                <form id="project-engineer-package-form" onsubmit="handleProjectEngineerSubmit(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Package / Submission Title *</label>
+                            <input type="text" id="pe-package-name" class="form-control" required placeholder="e.g. Turbine Valve Assembly Technical Specs & MTC">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Project Reference Number *</label>
+                            <input type="text" id="pe-project-ref" class="form-control" required placeholder="e.g. PRJ-SEM-2026-09">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">PO Reference Number</label>
+                            <input type="text" id="pe-po-number" class="form-control" placeholder="e.g. PO-2026-001">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Vendor / Supplier Name</label>
+                            <input type="text" id="pe-vendor-name" class="form-control" placeholder="e.g. ACME Electronics Pvt Ltd">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Engineer Name</label>
+                            <input type="text" id="pe-engineer-name" class="form-control" value="Mr. Rajesh Sharma (Project Engineer)">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Package Description & Notes</label>
+                        <textarea id="pe-notes" class="form-control" rows="2" placeholder="e.g. Includes Mill Test Report (MTC), Factory Acceptance Test (FAT) Log, and Dimension Inspection Sheet."></textarea>
+                    </div>
+
+                    <!-- Dynamic Multi-File & Category Attachment Container -->
+                    <div style="background: #F5F3FF; padding: 18px; border-radius: 12px; border: 1px solid #DDD6FE; margin-top: 18px; margin-bottom: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <strong style="color: #5B21B6; font-size: 0.95rem;">📎 Attach Files & Assign Manual Categories</strong>
+                                <div style="font-size: 0.78rem; color: #6D28D9;">Add one or more files. Each file requires a category classification tag.</div>
+                            </div>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="addProjectEngineerFileRow()" style="border-color: #7C3AED; color: #7C3AED; background: #FFFFFF; font-weight: 600;">
+                                ➕ Add Another File Row
+                            </button>
+                        </div>
+
+                        <!-- Rows will be injected here dynamically -->
+                        <div id="pe-file-rows-container" style="display: flex; flex-direction: column; gap: 14px;">
+                            <!-- Default Row 1 injected by JS on init -->
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                        <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #6D28D9 0%, #7C3AED 100%); padding: 12px 28px; font-weight: 700;">
+                            💾 Save & Log Project Engineering Package
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Submissions Repository Card -->
+            <div class="card">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📐 Project Engineering Packages Repository</span>
+                    <span class="badge badge-draft" id="pe-count-badge">0 Packages</span>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Package Title</th>
+                                <th>Project Ref</th>
+                                <th>PO & Vendor</th>
+                                <th>Categorized Files Attached</th>
+                                <th>Engineer</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pe-table-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- 3. TRI-PARTY DISPATCH TAB -->
+        <section id="dispatch-tab" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <span>🚚 Tri-Party Dispatch Initiation</span>
+                    <span class="badge badge-dispatch">Module 2</span>
+                </div>
+                
+                <!-- Wizard Navigation -->
+                <div class="wizard-steps">
+                    <div class="wizard-step active" id="step-btn-1" onclick="switchWizardStep(1)">1. Supplier</div>
+                    <div class="wizard-step" id="step-btn-2" onclick="switchWizardStep(2)">2. Transporter</div>
+                    <div class="wizard-step" id="step-btn-3" onclick="switchWizardStep(3)">3. Client & Collections</div>
+                </div>
+
+                <form id="dispatch-form" enctype="multipart/form-data">
+                    <!-- Step 1: Supplier -->
+                    <div id="wizard-step-1" class="wizard-pane">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Supplier / Vendor Name</label>
+                                <input type="text" name="supplier_name" id="dispatch-supplier-name" class="form-control" value="SEMCO Dispatch Team" style="background-color: #F1F5F9; color: #334155; font-weight: 600; border: 1px solid #CBD5E1;" required title="Defaulted to SEMCO Dispatch Team. Click to edit if needed.">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Supplier Phone Number</label>
+                                <input type="text" name="supplier_phone" class="form-control" placeholder="+91 98765 43210" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">P.O. Number (Purchase Order)</label>
+                                <input type="text" name="po_number" class="form-control" placeholder="e.g. PO-SEM-2026-089">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Upload Invoice Document</label>
+                                <input type="file" name="supplier_invoice_file" accept="image/*,.pdf" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Upload Delivery Challan Document</label>
+                                <input type="file" name="supplier_challan_file" accept="image/*,.pdf" class="form-control">
+                            </div>
+                        </div>
+
+                        <!-- QC Approved Documents (auto-populated from Module 3 → QC Gate) -->
+                        <div style="background: #F0FDF4; border: 1.5px solid #86EFAC; border-radius: 12px; padding: 16px; margin: 16px 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <strong style="color: #166534; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                                    🛡️ QC Approved Documents (Auto-Linked from QC Gate)
+                                </strong>
+                                <span class="badge badge-verified" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size: 0.72rem;">Auto-Populated</span>
+                            </div>
+                            <p style="font-size: 0.8rem; color: #15803D; margin-bottom: 10px;">These documents were approved by QC Desk from Project Engineer packages. They are automatically attached to this dispatch.</p>
+                            <div id="dispatch-qc-approved-docs-container" style="display: flex; flex-direction: column; gap: 8px;">
+                                <span style="color: #64748B; font-size: 0.82rem;">Loading QC approved documents...</span>
+                            </div>
+                            <input type="hidden" id="dispatch-qc-package-ids" name="qc_package_ids_json" value="[]">
+                        </div>
+
+                        <!-- Additional Upload (for anything missed) -->
+                        <div style="background: #FFFBEB; border: 1.5px solid #FDE68A; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <strong style="color: #92400E; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                                    📎 Additional Documents (Optional)
+                                </strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addDispatchAdditionalFileRow()" style="border-color: #D97706; color: #D97706; background: #FFFFFF; font-size: 0.78rem; font-weight: 700;">
+                                    ➕ Add File
+                                </button>
+                            </div>
+                            <p style="font-size: 0.78rem; color: #B45309; margin-bottom: 10px;">Upload any additional documents not covered by the QC-approved package (e.g. revised drawings, photos, extra certifications).</p>
+                            <div id="dispatch-additional-files-container" style="display: flex; flex-direction: column; gap: 8px;">
+                                <!-- Dynamic rows added by JS -->
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-primary" onclick="switchWizardStep(2)">Next: Transporter Details ➔</button>
+                    </div>
+
+                    <!-- Step 2: Transporter -->
+                    <div id="wizard-step-2" class="wizard-pane" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Driver Name</label>
+                                <input type="text" name="driver_name" class="form-control" placeholder="e.g. Rajesh Kumar" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Driver Phone Number (SMS Alert)</label>
+                                <input type="text" name="driver_phone" class="form-control" placeholder="+91 91234 56789" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Vehicle License Plate</label>
+                                <input type="text" name="vehicle_number" class="form-control" placeholder="MH-12-PQ-9082" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Truck / Vehicle Type</label>
+                                <input type="text" name="truck_type" class="form-control" placeholder="16 Ton Container" required>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" class="btn btn-outline" onclick="switchWizardStep(1)">⬅ Back</button>
+                            <button type="button" class="btn btn-primary" onclick="switchWizardStep(3)">Next: Client Details & Collections ➔</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Client & Collections -->
+                    <div id="wizard-step-3" class="wizard-pane" style="display: none;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Client Name</label>
+                                <input type="text" name="client_name" class="form-control" placeholder="e.g. Titan Industries" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Client Phone Number</label>
+                                <input type="text" name="client_phone" class="form-control" placeholder="+91 99887 76655" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Client Email ID (Automated Dispatch Email)</label>
+                                <input type="email" name="client_email" class="form-control" placeholder="dispatch@client.com" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Delivery Location (Address / Maps Link)</label>
+                                <input type="text" name="delivery_location" class="form-control" placeholder="Hub 4, Industrial Estate, Pune" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Dispatch Invoice Valuation (₹)</label>
+                                <input type="number" step="0.01" name="invoice_amount" class="form-control" placeholder="50000.00" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Payment Collection Due Date</label>
+                                <input type="date" name="collection_due_date" class="form-control" required>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 16px;">
+                            <button type="button" class="btn btn-outline" onclick="switchWizardStep(2)">⬅ Back</button>
+                            <button type="submit" class="btn btn-primary">🚀 Submit Dispatch Bundle</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- QC Approved Dispatches Awaiting Final Clearance Card -->
+            <div class="card" style="margin-top: 24px;" id="card-approved-dispatches">
+                <div class="card-title">
+                    <span>🚀 QC Approved Dispatches (Awaiting Final Clearance)</span>
+                    <span class="badge badge-verified">Ready for Gate Out</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                    Review QC-approved material bundles below and grant final clearance to release the transport vehicle & initiate delivery.
+                </p>
+                <div id="dispatch-final-clearance-container">
+                    <!-- Dynamic cards auto-populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. QC ADMIN VIEW TAB -->
+        <section id="qc-tab" class="tab-content">
+            <!-- SECTION 1: PROJECT ENGINEER TECH PACKAGES & MTC APPROVAL (MODULE 3) -->
+            <div class="card" style="border-top: 5px solid #7C3AED;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📐 Section 1: Engineering Technical Packages & MTC Approvals</span>
+                    <span class="badge" style="background: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE;">Module 3 Project Engg QC</span>
+                </div>
+                <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">
+                    Review technical drawings, mill test certificates (MTC), and QAP compliance documents submitted by the Project Engineer Desk. Once verified, packages are marked OK for Dispatch.
+                </p>
+                <div id="qc-project-engineer-container">
+                    <!-- Pending Project Engineer packages populated via JS -->
+                </div>
+            </div>
+
+            <!-- SECTION 2: QC DISPATCH GATE INSPECTION -->
+            <div class="card" style="border-top: 5px solid #059669; margin-top: 24px;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🚚 Section 2: QC Dispatch Gate Clearance</span>
+                    <span class="badge badge-dispatch">Module 6 Outward QC</span>
+                </div>
+                <div id="qc-dispatch-container">
+                    <!-- Pending dispatches review view populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. AUDIT & NOTIFICATIONS TAB -->
+        <section id="audit-tab" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    <span>🔔 System Communications Audit Trail</span>
+                    <span class="badge badge-verified">Email & SMS Logs</span>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+                    Real-time log of automated Client Emails, Transporter SMS webhooks, and Admin payment reminders.
+                </p>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Action / Event</th>
+                                <th>Activity Details</th>
+                                <th>Target Recipient</th>
+                                <th>Section</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-table-body">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- MASTER ADMIN POWER BI ENTERPRISE EXECUTIVE DASHBOARD -->
+        <section id="admin-dashboard-tab" class="tab-content" style="background: #F1F5F9; margin: -20px -20px 0 -20px; padding: 20px; border-radius: 12px;">
+            
+            <!-- Power BI Top Filter & Slicer Control Bar (Dark Slate Canvas Header) -->
+            <div style="background: #0F172A; color: white; padding: 18px 24px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: #F59E0B; color: #0F172A; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);">
+                        📊
+                    </div>
+                    <div>
+                        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: white; letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px;">
+                            SEMCO SCM Enterprise Analytics & Command Center
+                        </h2>
+                        <div style="font-size: 0.8rem; color: #94A3B8; margin-top: 2px;">
+                            SEMCO GateFlow SCM — Cross-Module KPI Scorecards, Cashflow Velocity & Operational Funnels
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Power BI Slicer Controls -->
+                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    <div style="background: #1E293B; border: 1px solid #334155; padding: 4px 10px; border-radius: 8px; font-size: 0.78rem;">
+                        <span style="color: #94A3B8;">Slicer:</span> <strong style="color: #F59E0B;" id="pbi-slicer-period">FY 2026-27 (All Modules)</strong>
+                    </div>
+                    <button type="button" class="btn btn-outline btn-sm" onclick="fetchMasterAdminDashboardSummary()" style="border-color: #38BDF8; color: #38BDF8; background: rgba(56, 189, 248, 0.1); font-weight: 700;">
+                        🔄 Refresh Visuals
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" style="background: #F59E0B; color: #0F172A; border: none; font-weight: 800;">
+                        📄 Export Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- POWER BI KPI SCORECARDS ROW (5 CRISP METRIC TILES) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                
+                <!-- KPI 1: PO Procurement Volume -->
+                <div style="background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; border-top: 4px solid #2563EB; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">PROCUREMENT VOL (POs)</span>
+                        <span style="font-size: 0.9rem;">📋</span>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #0F172A;" id="dash-po-val">₹ 0.00</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 6px; color: #475569;">
+                        <span>Total: <strong id="dash-po-total">0</strong></span>
+                        <span style="color: #D97706; font-weight: 700;">Pending: <strong id="dash-po-pending">0</strong></span>
+                    </div>
+                </div>
+
+                <!-- KPI 2: Inward Goods Value -->
+                <div style="background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; border-top: 4px solid #059669; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">INWARD GOODS VALUE</span>
+                        <span style="font-size: 0.9rem;">📥</span>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #0F172A;" id="dash-rec-amt">₹ 0.00</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 6px; color: #475569;">
+                        <span>Invoices: <strong id="dash-rec-total">0</strong></span>
+                        <span style="color: #059669; font-weight: 700;">Verified: <strong id="dash-rec-verified">0</strong></span>
+                    </div>
+                </div>
+
+                <!-- KPI 3: Outward Payables Settled -->
+                <div style="background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; border-top: 4px solid #D97706; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">VENDOR PAYMENTS PAID</span>
+                        <span style="font-size: 0.9rem;">💸</span>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #0F172A;" id="dash-pay-paid">₹ 0.00</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 6px; color: #475569;">
+                        <span>Due Balance: <strong id="dash-pay-due" style="color: #DC2626;">₹ 0.00</strong></span>
+                    </div>
+                </div>
+
+                <!-- KPI 4: Customer Collections -->
+                <div style="background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; border-top: 4px solid #16A34A; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">CLIENT COLLECTIONS</span>
+                        <span style="font-size: 0.9rem;">💰</span>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #0F172A;" id="dash-pay-rec">₹ 0.00</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 6px; color: #475569;">
+                        <span>Outstanding: <strong id="dash-pay-out" style="color: #EA580C;">₹ 0.00</strong></span>
+                    </div>
+                </div>
+
+                <!-- KPI 5: Net Settled Cashflow -->
+                <div style="background: #FFFFFF; border-radius: 10px; border: 1px solid #E2E8F0; border-top: 4px solid #7C3AED; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 0.72rem; font-weight: 800; color: #64748B; text-transform: uppercase; letter-spacing: 0.05em;">NET CASHFLOW VELOCITY</span>
+                        <span style="font-size: 0.9rem;">⚡</span>
+                    </div>
+                    <div style="font-size: 1.4rem; font-weight: 800; color: #7C3AED;" id="dash-pay-net">₹ 0.00</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 6px; color: #6D28D9;">
+                        <span>Collections minus Payments</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- POWER BI VISUAL CHARTS GRID (2 COLUMNS LAYOUT) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(460px, 1fr)); gap: 18px; margin-bottom: 20px;">
+                
+                <!-- Chart 1: Cashflow & Financial Velocity (Bar Chart) -->
+                <div style="background: #FFFFFF; padding: 18px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                        <strong style="color: #0F172A; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                            📊 Treasury Cashflow Velocity (Payables vs Receivables)
+                        </strong>
+                        <span style="font-size: 0.72rem; background: #EFF6FF; color: #1E40AF; padding: 3px 8px; border-radius: 4px; font-weight: 700;">Bar Visual</span>
+                    </div>
+                    <div style="position: relative; height: 230px;">
+                        <canvas id="pbi-chart-cashflow"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Procurement & PO Approval Pipeline (Donut Chart) -->
+                <div style="background: #FFFFFF; padding: 18px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                        <strong style="color: #0F172A; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                            🍩 Procurement & PO Status Funnel
+                        </strong>
+                        <span style="font-size: 0.72rem; background: #FFFBEB; color: #B45309; padding: 3px 8px; border-radius: 4px; font-weight: 700;">Donut Visual</span>
+                    </div>
+                    <div style="position: relative; height: 230px;">
+                        <canvas id="pbi-chart-po-pipeline"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 3: Receiving Goods Verification & QC Funnel (Horizontal Bar) -->
+                <div style="background: #FFFFFF; padding: 18px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                        <strong style="color: #0F172A; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                            📦 Inward Goods Verification & QC Inspection
+                        </strong>
+                        <span style="font-size: 0.72rem; background: #F0FDF4; color: #15803D; padding: 3px 8px; border-radius: 4px; font-weight: 700;">Funnel Visual</span>
+                    </div>
+                    <div style="position: relative; height: 210px;">
+                        <canvas id="pbi-chart-receiving-qc"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 4: Dispatch & Logistics Status Breakdown (Pie Chart) -->
+                <div style="background: #FFFFFF; padding: 18px; border-radius: 12px; border: 1px solid #E2E8F0; box-shadow: 0 2px 10px rgba(0,0,0,0.04);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #F1F5F9; padding-bottom: 8px;">
+                        <strong style="color: #0F172A; font-size: 0.92rem; display: flex; align-items: center; gap: 6px;">
+                            🚚 Dispatch & Tri-Party Logistics Tracker
+                        </strong>
+                        <span style="font-size: 0.72rem; background: #FFF7ED; color: #C2410C; padding: 3px 8px; border-radius: 4px; font-weight: 700;">Pie Visual</span>
+                    </div>
+                    <div style="position: relative; height: 210px;">
+                        <canvas id="pbi-chart-dispatch-status"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+
+
+        </section>
+
+        <!-- 1. PURCHASE ORDERS (UNIFIED PO DESK MODULE) TAB -->
+        <section id="po-tab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); color: white; padding: 18px 22px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px;">
+                        📋 SEMCO Purchase Orders Desk
+                    </h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9;">
+                        Unified Purchase Order Workspace — Project Autofill, Format Builder & Dedicated Master Repository.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PO Module Sub-Tab Navigation Bar -->
+            <div style="display: flex; gap: 12px; margin-bottom: 20px; border-bottom: 2px solid #CBD5E1; padding-bottom: 12px; flex-wrap: wrap; position: sticky; top: 0; background: #F8FAFC; z-index: 100; padding-top: 8px;">
+                <button type="button" class="btn btn-primary" id="po-subnav-prep" onclick="switchPOSubTab('prep')" style="font-weight: 700; padding: 10px 20px; border-radius: 8px;">
+                    ✍️ Section 1: Preparation of PO
+                </button>
+                <button type="button" class="btn btn-outline" id="po-subnav-repo" onclick="switchPOSubTab('repo')" style="font-weight: 700; padding: 10px 20px; border-radius: 8px; border-color: #2563EB; color: #2563EB; background: #FFFFFF;">
+                    📋 Section 2: Master PO Repository
+                </button>
+            </div>
+
+            <!-- SECTION 1: PREPARATION OF PO -->
+            <div id="po-section-prep" class="po-sub-section" style="margin-bottom: 30px;">
+            <!-- Portal Connection & Project Selection Banner -->
+            <div class="card" style="border: 2px solid #2563EB; background: #F0F6FF; padding: 18px; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.4rem;">🔗</span>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; color: #1E3A8A;">SEMCORP Enquiry Portal Integration</h3>
+                            <div style="font-size: 0.8rem; color: #3B82F6;">
+                                Connected to: <a href="https://semcorpemp.vercel.app/" target="_blank" style="color: #1D4ED8; font-weight: 700; text-decoration: underline;">https://semcorpemp.vercel.app/</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="badge" style="background: #DCFCE7; color: #15803D; border: 1px solid #86EFAC; font-weight: 700; padding: 6px 12px;">
+                            🟢 Live Sync Active
+                        </span>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="fetchPortalProjects()" style="border-color: #2563EB; color: #2563EB; font-weight: 600;">
+                            🔄 Refresh Portal Projects
+                        </button>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: flex-end;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-weight: 800; color: #1E3A8A; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                            <span>📐 Select Project Number for PO Preparation:</span>
+                            <span style="font-weight: normal; color: #64748B; font-size: 0.78rem;">(Selecting autofills line items, vendor details & terms)</span>
+                        </label>
+                        <select id="semco-po-project-select" class="form-control" onchange="onPOProjectNumberSelect(this.value)" style="border: 2px solid #2563EB; font-weight: 700; font-size: 0.95rem; color: #1E3A8A; background: #FFFFFF;">
+                            <option value="">-- Choose Project Number from semcorpemp.vercel.app --</option>
+                            <option value="PRJ-SEM-2026-101">PRJ-SEM-2026-101 — Vacuum Distillation Unit Package (Thermax Ltd)</option>
+                            <option value="PRJ-SEM-2026-102">PRJ-SEM-2026-102 — Bio-Ethanol Evaporator Skid (Praj Industries)</option>
+                            <option value="PRJ-992">PRJ-992 — Steam Condensate Vacuum Package (Forbes Marshall)</option>
+                            <option value="PRJ-995">PRJ-995 — Hygienic Flow Automation (Alfa Laval)</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="triggerAutoFillSelectedProject()" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); font-weight: 700; height: 42px; padding: 0 20px;">
+                        ✨ Autofill PO for Selected Project
+                    </button>
+                </div>
+            </div>
+
+            <!-- UNIFIED PO BUILDER FORM -->
+            <div class="card" style="border-top: 5px solid #1E3A8A; padding: 24px; background: #FFFFFF; margin-bottom: 24px;">
+                <div class="card-title" style="margin-bottom: 20px; border-bottom: 2px solid #E2E8F0; padding-bottom: 10px;">
+                    <span style="color: #1E3A8A; font-weight: 800;">✍️ Purchase Order Builder & Signatory Approval</span>
+                    <span class="badge" style="background: #EFF6FF; color: #1E3A8A; border: 1px solid #BFDBFE;">SEMCO Standard Format</span>
+                </div>
+
+                <form id="semco-po-builder-form" onsubmit="handleSEMCAPOBuilderSubmit(event)">
+                    <!-- SEMCO Official Document Preview & Input Layout -->
+                    <div style="background: white; border: 2px solid #0F172A; border-radius: 10px; padding: 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 20px;">
+                        
+                        <!-- Header Banner -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0F172A; padding-bottom: 12px; margin-bottom: 14px; flex-wrap: wrap; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <img src="/static/assets/semco_logo.png" alt="SEMCO Logo" style="height: 50px;">
+                            </div>
+                            <div style="text-align: right; font-size: 0.82rem; color: #1E293B;">
+                                <h2 style="margin: 0 0 2px 0; color: #1E3A8A; font-size: 1.15rem; font-weight: 800; text-transform: uppercase;">SEMCORP PROCESS AND VACUUM SYSTEMS PVT. LTD</h2>
+                                <div style="font-style: italic; font-size: 0.78rem;">Office: ACE Aurum 2, Office No. A-302, Ravet, Pune - 411033 MH, India</div>
+                                <div style="font-style: italic; font-size: 0.78rem;">Factory: Opposite Arya Industries, Gat No 63, Dehu-Alandi Road Talwade, Pune, 411062</div>
+                            </div>
+                        </div>
+
+                        <!-- Title Banner -->
+                        <div style="background: #1E3A8A; color: white; text-align: center; font-weight: 800; font-size: 1.1rem; padding: 7px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; border-radius: 4px;">
+                            PURCHASE ORDER
+                        </div>
+
+                        <!-- PO Metadata Grid (3 Columns) -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; background: #F8FAFC; padding: 14px; border: 1px solid #CBD5E1; border-radius: 8px; margin-bottom: 16px;">
+                            <div>
+                                <div class="form-group" style="margin-bottom: 8px;">
+                                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem;">PO No *</label>
+                                    <input type="text" id="semco-po-no" class="form-control form-control-sm" value="26/27 - 001" required style="font-weight: 800; color: #1E3A8A; background: #FFF;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem;">PO Date *</label>
+                                    <input type="date" id="semco-po-date" class="form-control form-control-sm" required style="background: #FFF;">
+                                </div>
+                            </div>
+                            <div>
+                                <div class="form-group" style="margin-bottom: 8px;">
+                                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem;">Quotation Ref / Mode</label>
+                                    <input type="text" id="semco-po-quot-mode" class="form-control form-control-sm" value="MAIL" style="background: #FFF;">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem;">Quotation No *</label>
+                                    <input type="text" id="semco-po-quot-no" class="form-control form-control-sm" value="QTN-2026-042" required style="background: #FFF;">
+                                </div>
+                            </div>
+                            <div>
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="form-group" style="margin-bottom: 8px; flex: 1;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Mobile No</label>
+                                        <input type="text" id="semco-po-mobile" class="form-control form-control-sm" value="9684011614" style="background: #FFF;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 8px; flex: 1;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Email ID</label>
+                                        <input type="email" id="semco-po-email" class="form-control form-control-sm" value="umesh.p@semcogroups.com" style="background: #FFF;">
+                                    </div>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Amendment No</label>
+                                        <input type="text" id="semco-po-amend-no" class="form-control form-control-sm" value="-" style="background: #FFF;">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Amendment Date</label>
+                                        <input type="text" id="semco-po-amend-date" class="form-control form-control-sm" value="-" style="background: #FFF;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Details vs Ship To Details (2 Columns) -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <!-- Vendor Details Box -->
+                            <div style="border: 1.5px solid #1E3A8A; border-radius: 8px; overflow: hidden;">
+                                <div style="background: #1E3A8A; color: white; font-weight: 700; font-size: 0.85rem; padding: 6px 12px; text-transform: uppercase;">
+                                    VENDOR DETAILS
+                                </div>
+                                <div style="padding: 12px; background: #FFF;">
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Vendor Company Name *</label>
+                                        <input type="text" id="semco-vendor-name" class="form-control form-control-sm" value="ABC Engineering Solutions Pvt. Ltd." required>
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Vendor Address</label>
+                                        <input type="text" id="semco-vendor-address" class="form-control form-control-sm" value="Plot No. 45, Sector 7, MIDC, Bhosari, Pune - 411026">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem; color: #1E3A8A;">GST NO *</label>
+                                        <input type="text" id="semco-vendor-gst" class="form-control form-control-sm" value="27ABCDE1234F1Z5" required style="font-weight: 700;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ship To Details Box -->
+                            <div style="border: 1.5px solid #1E3A8A; border-radius: 8px; overflow: hidden;">
+                                <div style="background: #1E3A8A; color: white; font-weight: 700; font-size: 0.85rem; padding: 6px 12px; text-transform: uppercase;">
+                                    SHIP TO DETAILS
+                                </div>
+                                <div style="padding: 12px; background: #FFF;">
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Consignee Name</label>
+                                        <input type="text" id="semco-ship-name" class="form-control form-control-sm" value="SEMCORP PROCESS AND VACUUM SYSTEMS PVT. LTD">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-size: 0.75rem;">Delivery / Factory Address</label>
+                                        <input type="text" id="semco-ship-address" class="form-control form-control-sm" value="Opposite Arya Industries, Gat No 63, Near by Steel Fab Engineering, Dehu-Alandi Road Talwade, Pune, 411062">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem; color: #1E3A8A;">GST NO</label>
+                                        <input type="text" id="semco-ship-gst" class="form-control form-control-sm" value="27ABRCS0246H1Z3" style="font-weight: 700;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Line Items Table -->
+                        <div style="margin-bottom: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <strong style="color: #1E3A8A; font-size: 0.95rem;">📦 Line Items & Goods Description</strong>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="addPOLineItemRow()" style="border-color: #2563EB; color: #2563EB; font-weight: 700;">
+                                    ➕ Add Item Line
+                                </button>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="data-table" id="semco-po-items-table" style="font-size: 0.82rem;">
+                                    <thead style="background: #1E3A8A; color: white;">
+                                        <tr>
+                                            <th style="width: 45px; text-align: center;">Line</th>
+                                            <th style="min-width: 220px;">Description of Goods</th>
+                                            <th style="width: 120px;">Project No.</th>
+                                            <th style="width: 90px;">HSN/SAC</th>
+                                            <th style="width: 70px;">Qty</th>
+                                            <th style="width: 75px;">UOM</th>
+                                            <th style="width: 110px;">Base Rate (INR)</th>
+                                            <th style="width: 80px;">GST %</th>
+                                            <th style="width: 130px;">Amount (INR)</th>
+                                            <th style="width: 40px;"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="semco-po-items-tbody">
+                                        <!-- Dynamic Line Items Rows populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Financial Calculation & Tax Summary Block -->
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px;">
+                            <div>
+                                <div style="background: #F1F5F9; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px; margin-bottom: 12px; font-style: italic; font-size: 0.85rem; color: #1E293B;">
+                                    <strong>Amount in words:</strong> <span id="semco-amount-words-display" style="font-weight: 700; color: #1E3A8A;">Indian Rupees One Lakh Forty Thousand Sixty Only</span>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" style="font-weight: 700; font-size: 0.78rem;">Attachments / Technical Annexure Note</label>
+                                    <input type="text" id="semco-po-attachments" class="form-control form-control-sm" value="Technical Specifications Annexure-A.pdf" placeholder="e.g. Technical Specifications Annexure-A.pdf">
+                                </div>
+                            </div>
+
+                            <!-- Right Totals Table -->
+                            <div style="border: 1px solid #CBD5E1; border-radius: 8px; overflow: hidden; font-size: 0.85rem; background: #FFF;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #E2E8F0; background: #F8FAFC;">
+                                    <span>Total Qty:</span>
+                                    <strong id="semco-calc-total-qty">13</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #E2E8F0;">
+                                    <span>SUB TOTAL :</span>
+                                    <strong id="semco-calc-subtotal">₹ 1,17,000.00</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-bottom: 1px solid #E2E8F0;">
+                                    <span>FREIGHT :</span>
+                                    <input type="number" step="0.01" id="semco-input-freight" class="form-control form-control-sm" value="1500" style="width: 110px; text-align: right; font-weight: 700;" oninput="recalculateSEMCOTotals()">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-bottom: 1px solid #E2E8F0;">
+                                    <span>P&F (Packing & Forwarding) :</span>
+                                    <input type="number" step="0.01" id="semco-input-pf" class="form-control form-control-sm" value="500" style="width: 110px; text-align: right; font-weight: 700;" oninput="recalculateSEMCOTotals()">
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #E2E8F0; color: #1E3A8A;">
+                                    <span id="semco-tax-label">IGST 18% :</span>
+                                    <strong id="semco-calc-tax">₹ 21,060.00</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 10px 12px; background: #1E3A8A; color: white; font-size: 1rem;">
+                                    <strong>GRAND TOTAL :</strong>
+                                    <strong id="semco-calc-grandtotal">₹ 1,40,060.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TERMS & CONDITIONS Box -->
+                        <div style="border: 1.5px solid #1E3A8A; border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
+                            <div style="background: #1E3A8A; color: white; font-weight: 700; font-size: 0.85rem; padding: 6px 12px; text-transform: uppercase;">
+                                TERMS & CONDITIONS
+                            </div>
+                            <div style="padding: 12px; background: #FFF; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; font-size: 0.82rem;">
+                                <div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Payment Terms *</label>
+                                        <input type="text" id="semco-term-payment" class="form-control form-control-sm" value="30 Days after Delivery">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Freight Terms</label>
+                                        <input type="text" id="semco-term-freight" class="form-control form-control-sm" value="Paid by Vendor">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Remarks</label>
+                                        <input type="text" id="semco-term-remarks" class="form-control form-control-sm" value="Deliver material with test certificates.">
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Mode of Dispatch</label>
+                                        <input type="text" id="semco-term-dispatch-mode" class="form-control form-control-sm" value="Road Transport">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Inspection Terms</label>
+                                        <input type="text" id="semco-term-inspection" class="form-control form-control-sm" value="Before Dispatch">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label class="form-label" style="font-weight: 700; font-size: 0.75rem;">Delivered Terms</label>
+                                        <input type="text" id="semco-term-delivery" class="form-control form-control-sm" value="Door Delivery">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prepared By & Authorised Signatory Footer -->
+                        <div style="display: flex; justify-content: space-between; align-items: flex-end; padding-top: 14px; border-top: 1px solid #CBD5E1; margin-bottom: 12px; flex-wrap: wrap; gap: 14px;">
+                            <div style="text-align: center;">
+                                <div style="font-weight: 700; color: #1E293B; font-size: 0.9rem;" id="semco-preparer-name">Mr. Umesh H. Patil</div>
+                                <div style="font-size: 0.75rem; color: #64748B; font-style: italic;">Prepared By (Date: <span id="semco-preparer-date">29/07/2026</span>)</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="width: 220px; border-bottom: 1px solid #0F172A; margin-bottom: 4px;"></div>
+                                <div style="font-weight: 800; color: #1E3A8A; font-size: 0.85rem;">For SEMCORP PROCESS AND VACUUM SYSTEMS PVT. LTD</div>
+                                <div style="font-size: 0.75rem; color: #64748B; font-weight: 700;">Authorised Signatory</div>
+                            </div>
+                        </div>
+
+                        <!-- Quote Tagline Footer -->
+                        <div style="text-align: center; font-style: italic; font-size: 0.78rem; color: #1E3A8A; font-weight: 700; border-top: 1px dashed #CBD5E1; padding-top: 6px;">
+                            "Coming Together is a beginning, staying together is progress and working Together is Success"-- <span style="color: #D97706;">Henry Ford</span>
+                        </div>
+                    </div>
+
+                    <!-- Form Action Buttons -->
+                    <div style="display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline" onclick="saveSEMCOPO('SAVE_DRAFT')">
+                            💾 Save as Draft PO
+                        </button>
+                        <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%); font-weight: 700; padding: 10px 24px;">
+                            🚀 Submit PO for Approval
+                        </button>
+                    </div>
+                </form>
+            </div>
+            </div><!-- END SECTION 1: PREPARATION OF PO -->
+
+            <!-- SECTION 2: MASTER PO REPOSITORY -->
+            <div id="po-section-repo" class="po-sub-section" style="margin-top: 10px;">
+                <div class="card">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 Master Purchase Orders Repository</span>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span class="badge badge-pending" id="po-pending-approval-badge">0 Pending</span>
+                            <span class="badge badge-draft" id="po-count-badge">0 POs</span>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>PO Number</th>
+                                    <th>Vendor Name</th>
+                                    <th>PO Date</th>
+                                    <th>Payment Terms</th>
+                                    <th>PO Total (₹)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="po-table-body">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div><!-- END SECTION 2: MASTER PO REPOSITORY -->
+        </section>
+
+        <!-- 4. PAYMENTS DESK (PAYABLES & RECEIVABLES) TAB -->
+        <section id="payments-tab" class="tab-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%); color: white; padding: 18px 22px; border-radius: 14px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px;">
+                        💳 Payments Desk (Payables & Receivables Treasury)
+                    </h2>
+                    <p style="margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9;">
+                        Unified Cashflow Management — Track Vendor Outward Payments (Paying) & Customer Inward Collections (Receiving) with real-time sync across POs, Inward Goods & Dispatches.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Top Summary Cards (4 Cards Grid) -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                <div class="card" style="border-left: 5px solid #2563EB; background: #EFF6FF; padding: 16px;">
+                    <div style="font-size: 0.8rem; color: #1E40AF; font-weight: 700; text-transform: uppercase;">Total Vendor Payments Made</div>
+                    <div id="pay-card-total-payables" style="font-size: 1.4rem; font-weight: 800; color: #1E3A8A; margin-top: 4px;">₹ 0.00</div>
+                    <div style="font-size: 0.75rem; color: #3B82F6; margin-top: 4px;">Due Balance: <strong id="pay-card-due-payables">₹ 0.00</strong></div>
+                </div>
+
+                <div class="card" style="border-left: 5px solid #16A34A; background: #F0FDF4; padding: 16px;">
+                    <div style="font-size: 0.8rem; color: #15803D; font-weight: 700; text-transform: uppercase;">Total Customer Collections Received</div>
+                    <div id="pay-card-total-receivables" style="font-size: 1.4rem; font-weight: 800; color: #15803D; margin-top: 4px;">₹ 0.00</div>
+                    <div style="font-size: 0.75rem; color: #22C55E; margin-top: 4px;">Outstanding: <strong id="pay-card-out-receivables">₹ 0.00</strong></div>
+                </div>
+
+                <div class="card" style="border-left: 5px solid #D97706; background: #FFFBEB; padding: 16px;">
+                    <div style="font-size: 0.8rem; color: #92400E; font-weight: 700; text-transform: uppercase;">Net Settled Cashflow</div>
+                    <div id="pay-card-net-cashflow" style="font-size: 1.4rem; font-weight: 800; color: #B45309; margin-top: 4px;">₹ 0.00</div>
+                    <div style="font-size: 0.75rem; color: #D97706; margin-top: 4px;">Collections minus Outward Payments</div>
+                </div>
+
+                <div class="card" style="border-left: 5px solid #8B5CF6; background: #F5F3FF; padding: 16px;">
+                    <div style="font-size: 0.8rem; color: #6D28D9; font-weight: 700; text-transform: uppercase;">Net Outstanding Gap</div>
+                    <div id="pay-card-net-gap" style="font-size: 1.4rem; font-weight: 800; color: #7C3AED; margin-top: 4px;">₹ 0.00</div>
+                    <div style="font-size: 0.75rem; color: #8B5CF6; margin-top: 4px;">Receivables Gap vs Vendor Due</div>
+                </div>
+            </div>
+
+            <!-- Payments Module Sub-Tab Navigation Bar -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #CBD5E1; padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-primary" id="payments-subnav-payables" onclick="switchPaymentsSubTab('payables')" style="font-weight: 700; padding: 10px 18px; border-radius: 8px;">
+                        💸 Section 1: Vendor Payables (Paying)
+                    </button>
+                    <button type="button" class="btn btn-outline" id="payments-subnav-receivables" onclick="switchPaymentsSubTab('receivables')" style="font-weight: 700; padding: 10px 18px; border-radius: 8px; border-color: #15803D; color: #15803D;">
+                        💰 Section 2: Customer Receivables (Receiving)
+                    </button>
+                    <button type="button" class="btn btn-outline" id="payments-subnav-calendar" onclick="switchPaymentsSubTab('calendar')" style="font-weight: 700; padding: 10px 18px; border-radius: 8px; border-color: #7C3AED; color: #7C3AED;">
+                        🗓️ Section 3: Financial Payment Calendar
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openRecordVendorPayableModal()" style="background: #2563EB;">
+                        💸 + Record Vendor Payment
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" onclick="openRecordCustomerReceivableModal()" style="background: #16A34A;">
+                        💰 + Record Customer Collection
+                    </button>
+                </div>
+            </div>
+
+            <!-- SECTION 1: VENDOR PAYABLES (PAYING) -->
+            <div id="payments-section-payables" class="payments-sub-section">
+                <div class="card">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>💸 Vendor Outward Payments (Accounts Payable)</span>
+                        <span class="badge badge-pending">Synced with PO & Inward Goods</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>PO / Bill Ref</th>
+                                    <th>Vendor Name</th>
+                                    <th>Payment Date</th>
+                                    <th>Bill Amount (₹)</th>
+                                    <th>Paid Amount (₹)</th>
+                                    <th>Balance Due (₹)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendor-payables-tbody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: CUSTOMER RECEIVABLES (RECEIVING) -->
+            <div id="payments-section-receivables" class="payments-sub-section" style="display: none;">
+                <div class="card">
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>💰 Customer Inward Collections (Accounts Receivable)</span>
+                        <span class="badge badge-verified">Synced with Dispatch & Outward Packages</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Invoice / Ref No</th>
+                                    <th>Customer Name</th>
+                                    <th>Receipt Date</th>
+                                    <th>Total Value (₹)</th>
+                                    <th>Received (₹)</th>
+                                    <th>Outstanding (₹)</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-receivables-tbody">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 3: FINANCIAL PAYMENT & COLLECTION CALENDAR -->
+            <div id="payments-section-calendar" class="payments-sub-section" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="font-size: 1.15rem; color: #5B21B6; margin: 0;">🗓️ Unified Financial Control & Payment Calendars</h3>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="triggerPaymentCheck()" style="background: #7C3AED;">🔔 Run Daily Due Scanner</button>
+                </div>
+
+                <!-- Vendor Invoices Payable Calendar -->
+                <div class="card" id="card-payables-calendar" style="margin-bottom: 20px;">
+                    <div class="card-title">
+                        <span>💳 Vendor Invoices Payable Calendar (Outward Due Dates)</span>
+                        <span class="badge badge-draft">Payables</span>
+                    </div>
+
+                    <!-- Payables Multi-Attribute Category & Filter Control Bar -->
+                    <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid #E2E8F0; margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                            <strong style="color: var(--semco-blue); font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                                🔍 Categorize & Filter Payables Records
+                            </strong>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="resetPayablesFilters()" style="border-color: #64748B; color: #64748B; background: #FFF; font-weight: 600;">
+                                🔄 Reset Filters
+                            </button>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">1. Search Invoice No</label>
+                                <input type="text" id="payables-filter-inv" class="form-control" placeholder="e.g. INV-2026-0881" style="font-size: 0.82rem;" oninput="applyPayablesCategorizedFilters()">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">2. Invoice / Inward Date</label>
+                                <input type="date" id="payables-filter-date" class="form-control" style="font-size: 0.82rem;" onchange="applyPayablesCategorizedFilters()">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">3. PO / Ref No</label>
+                                <input type="text" id="payables-filter-po" class="form-control" placeholder="e.g. PO-2026-001" style="font-size: 0.82rem;" oninput="applyPayablesCategorizedFilters()">
+                            </div>
+
+                            <div class="form-group" style="margin-bottom: 0;">
+                                <label class="form-label" style="font-size: 0.72rem; color: #475569; font-weight: 600;">4. Payment Terms / Due Status</label>
+                                <select id="payables-filter-due" class="form-control" style="font-size: 0.82rem;" onchange="applyPayablesCategorizedFilters()">
+                                    <option value="ALL">All Payment Terms & Due Statuses</option>
+                                    <option value="OVERDUE">⚠️ Overdue (Past Due Date)</option>
+                                    <option value="DUE_7">⏳ Due within 7 Days</option>
+                                    <option value="DUE_30">📅 Due within 30 Days</option>
+                                    <option value="PARTIAL">⌛ Partially Paid</option>
+                                    <option value="PAID">✅ Fully Paid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="setPayablesQuickStatus('ALL')">All Invoices</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--danger); color: #F87171;" onclick="setPayablesQuickStatus('OVERDUE')">Overdue (Red)</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--warning); color: #FBBF24;" onclick="setPayablesQuickStatus('DUE_7')">Due in 7 Days (Yellow)</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: #F97316; color: #F97316;" onclick="setPayablesQuickStatus('PARTIAL')">Partially Paid</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--success); color: #34D399;" onclick="setPayablesQuickStatus('PAID')">Paid (Green)</button>
+                    </div>
+
+                    <div class="grid-cards" id="calendar-cards-container">
+                        <!-- Color coded payment cards populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Client Payment Collections Calendar -->
+                <div class="card" id="card-collections-calendar" style="border-left: 4px solid var(--semco-blue);">
+                    <div class="card-title">
+                        <span>💰 Client Payment Collections Calendar (Post-Dispatch Inward Dues)</span>
+                        <span class="badge badge-dispatch">Receivables</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="renderDispatchCollectionCalendar('ALL')">All Collections</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--danger); color: #F87171;" onclick="renderDispatchCollectionCalendar('OVERDUE')">Overdue Collections (Red)</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--warning); color: #FBBF24;" onclick="renderDispatchCollectionCalendar('UPCOMING')">Due in 7 Days (Yellow)</button>
+                        <button type="button" class="btn btn-outline btn-sm" style="border-color: var(--success); color: #34D399;" onclick="renderDispatchCollectionCalendar('COLLECTED')">Collected (Green)</button>
+                    </div>
+
+                    <div class="grid-cards" id="dispatch-calendar-container">
+                        <!-- Color coded dispatch collection cards populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (Mobile-First) -->
+    <nav class="bottom-nav">
+        <button class="nav-item" id="nav-item-dashboard" onclick="switchMainTab('admin-dashboard-tab', this)">
+            <span class="icon">📊</span>
+            <span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="nav-item-po" onclick="switchMainTab('po-tab', this)">
+            <span class="icon">📋</span>
+            <span>POs</span>
+        </button>
+        <button class="nav-item" id="nav-item-receiving" onclick="switchMainTab('receiving-tab', this)">
+            <span class="icon">📥</span>
+            <span>Receiving</span>
+        </button>
+        <button class="nav-item" id="nav-item-project-engineer" onclick="switchMainTab('project-engineer-tab', this)">
+            <span class="icon">📐</span>
+            <span>Project Eng.</span>
+        </button>
+        <button class="nav-item" id="nav-item-payments" onclick="switchMainTab('payments-tab', this)">
+            <span class="icon">💳</span>
+            <span>Payments</span>
+        </button>
+        <button class="nav-item" id="nav-item-qc" onclick="switchMainTab('qc-tab', this)">
+            <span class="icon">🛡️</span>
+            <span>QC Gate</span>
+        </button>
+        <button class="nav-item" id="nav-item-dispatch" onclick="switchMainTab('dispatch-tab', this)">
+            <span class="icon">🚚</span>
+            <span>Dispatch</span>
+        </button>
+        <button class="nav-item" id="nav-item-audit" onclick="switchMainTab('audit-tab', this)">
+            <span class="icon">🔔</span>
+            <span>Audit</span>
+        </button>
+    </nav>
+
+    <!-- Global Dynamic Confirmation Modal (Centered in Middle of Screen) -->
+    <div id="global-confirm-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; margin: 0; padding: 20px; box-sizing: border-box;">
+        <div class="modal-card">
+            <div class="modal-icon" id="confirm-modal-icon">⚠️</div>
+            <h3 class="modal-title" id="confirm-modal-title">Confirm Action</h3>
+            <p class="modal-body" id="confirm-modal-body">Are you sure you want to proceed with this action?</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" id="confirm-modal-cancel">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-modal-proceed">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Deep-Link Mobile Preview Modal -->
+    <div id="deeplink-preview-modal" class="modal-backdrop" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-icon" id="deeplink-modal-icon">📧</div>
+            <h3 class="modal-title" id="deeplink-modal-title">Email Direct Link</h3>
+            <div class="modal-body" id="deeplink-modal-body" style="text-align: left; font-size: 0.88rem;">
+                <!-- Deep link info populated via JS -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-primary btn-block" onclick="closeDeepLinkModal()">
+                    ✅ Proceed to Workspace
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receiving Record Verification & Document Preview Modal -->
+    <div id="receiving-preview-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); margin: 0; padding: 20px; box-sizing: border-box;">
+        <div class="modal-card" style="width: 95vw; max-width: 1050px; max-height: 90vh; overflow-y: auto; padding: 24px; background: #FFFFFF; border-radius: 16px; box-shadow: var(--shadow-xl);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">📄</span>
+                    <div>
+                        <h3 style="margin: 0; color: var(--semco-blue); font-size: 1.15rem;" id="rec-preview-title">Document & Data Verification</h3>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);" id="rec-preview-subtitle">Cross-verify saved receiving record against original uploaded document</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeReceivingPreviewModal()">❌ Close</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;" id="rec-preview-split-body">
+                <!-- Left Column: Document Viewer (Iframe / Image) -->
+                <!-- Right Column: Extracted Components & Verification Summary -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SEMCO Purchase Order Official Document Audit & Print Modal -->
+    <div id="semco-po-preview-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); margin: 0; padding: 20px; box-sizing: border-box;">
+        <div class="modal-card" style="width: 95vw; max-width: 950px; max-height: 90vh; overflow-y: auto; overflow-x: hidden; padding: 24px; background: #FFFFFF; border-radius: 16px; box-shadow: var(--shadow-xl); text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">📄</span>
+                    <div>
+                        <h3 style="margin: 0; color: #1E3A8A; font-size: 1.15rem;" id="semco-po-modal-title">Official SEMCO Purchase Order</h3>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">Signatory Audit, Document Verification & Print View</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeSEMCOPOPreviewModal()">❌ Close</button>
+            </div>
+            
+            <div id="semco-po-modal-body">
+                <!-- Rendered PO HTML Document -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Interactive Payment & Collection Modal (Partially Paid & Fully Paid) -->
+    <div id="global-payment-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; margin: 0; padding: 20px; box-sizing: border-box; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(6px);">
+        <div class="modal-card" style="max-width: 520px; width: 100%; border-radius: 16px; padding: 24px; text-align: left; background: #FFFFFF; box-shadow: var(--shadow-xl);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 2px solid var(--border-color); padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;" id="payment-modal-icon">💳</span>
+                    <h3 style="margin: 0; color: var(--semco-blue); font-size: 1.2rem;" id="payment-modal-title">Record Payment</h3>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closePaymentModal()" style="border: none; font-size: 1.1rem; cursor: pointer; color: var(--text-muted);">✖</button>
+            </div>
+
+            <!-- Document / Invoice Summary Box -->
+            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; margin-bottom: 18px;">
+                <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 2px;" id="payment-modal-subtitle">Invoice Reference</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--semco-blue);" id="payment-modal-ref">INV-2026-001</div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; text-align: center;">
+                    <div style="background: #FFF; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Total Amount</div>
+                        <div style="font-size: 0.9rem; font-weight: 700;" id="payment-modal-total">₹ 0.00</div>
+                    </div>
+                    <div style="background: #FFF; padding: 8px; border-radius: 8px; border: 1px solid #E2E8F0;">
+                        <div style="font-size: 0.72rem; color: var(--text-muted);">Already Paid</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #166534;" id="payment-modal-paid">₹ 0.00</div>
+                    </div>
+                    <div style="background: #FFF; padding: 8px; border-radius: 8px; border: 1px solid #FED7AA;">
+                        <div style="font-size: 0.72rem; color: #C2410C;">Remaining</div>
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #C2410C;" id="payment-modal-balance">₹ 0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="payment-modal-form" onsubmit="submitPaymentModal(event)">
+                <input type="hidden" id="payment-modal-record-id" value="">
+                <input type="hidden" id="payment-modal-target-type" value="RECEIVING"> <!-- RECEIVING or DISPATCH -->
+
+                <!-- Payment Type Option Selection -->
+                <div style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-weight: 700; color: var(--semco-blue); margin-bottom: 8px; display: block;">Select Payment Option *</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <label style="border: 2px solid #166534; background: #F0FDF4; border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" id="pay-opt-full-label">
+                            <input type="radio" name="payment_type" value="FULL" id="pay-opt-full" checked onchange="handlePaymentTypeToggle()">
+                            <div>
+                                <strong style="display: block; font-size: 0.9rem; color: #166534;">✅ Fully Paid</strong>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">100% Settlement</span>
+                            </div>
+                        </label>
+                        <label style="border: 2px solid #CBD5E1; background: #FFFFFF; border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;" id="pay-opt-partial-label">
+                            <input type="radio" name="payment_type" value="PARTIAL" id="pay-opt-partial" onchange="handlePaymentTypeToggle()">
+                            <div>
+                                <strong style="display: block; font-size: 0.9rem; color: #C2410C;">⌛ Partially Paid</strong>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Installment / Part</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Payment Amount (₹) *</label>
+                        <input type="number" step="0.01" id="payment-modal-amount" class="form-control" required oninput="updatePaymentModalPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Date *</label>
+                        <input type="date" id="payment-modal-date" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label class="form-label">Payment Mode & Reference / Notes</label>
+                    <input type="text" id="payment-modal-notes" class="form-control" placeholder="e.g. NEFT Ref #99281, Cheque #004512, Part Payment Installment 1">
+                </div>
+
+                <!-- Live Calculation Preview -->
+                <div id="payment-modal-calc-preview" style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; font-size: 0.85rem; color: #92400E; display: none;">
+                    <!-- Updated live via JS -->
+                </div>
+
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-payment">💾 Record Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Vendor Payment Modal (Paying) -->
+    <div id="record-payable-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3>💸 Record Vendor Payment (Outward Paying)</h3>
+                <button type="button" class="modal-close" onclick="closeRecordVendorPayableModal()">✕</button>
+            </div>
+            <form onsubmit="handleRecordVendorPayableSubmit(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">PO / Bill Ref No</label>
+                    <input type="text" id="rec-pay-po-no" class="form-control" placeholder="e.g. 26/27 - PRJ-SEM-2026-101">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Vendor Name *</label>
+                    <input type="text" id="rec-pay-vendor-name" class="form-control" required placeholder="e.g. Thermax Limited / ACME Electronics">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Total Bill Amount (₹) *</label>
+                        <input type="number" step="0.01" id="rec-pay-bill-amount" class="form-control" required placeholder="140060">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Paid Out (₹) *</label>
+                        <input type="number" step="0.01" id="rec-pay-paid-amount" class="form-control" required placeholder="50000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Payment Date *</label>
+                        <input type="date" id="rec-pay-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Mode *</label>
+                        <select id="rec-pay-mode" class="form-control">
+                            <option value="NEFT / Bank Transfer">NEFT / Bank Transfer</option>
+                            <option value="RTGS">RTGS</option>
+                            <option value="UPI / QR">UPI / QR</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Cash">Cash</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Transaction UTR / Ref Number</label>
+                    <input type="text" id="rec-pay-utr" class="form-control" placeholder="e.g. UTR-N20260811992">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Debit Bank Account</label>
+                    <input type="text" id="rec-pay-bank" class="form-control" value="HDFC Bank Ltd - Main Operative A/C">
+                </div>
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label class="form-label">Notes / Payment Allocation</label>
+                    <textarea id="rec-pay-notes" class="form-control" rows="2" placeholder="e.g. Advance 50% payment released against PO confirmation."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closeRecordVendorPayableModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">💸 Save Outward Payment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Record Customer Collection Modal (Receiving) -->
+    <div id="record-receivable-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3>💰 Record Customer Collection (Inward Receiving)</h3>
+                <button type="button" class="modal-close" onclick="closeRecordCustomerReceivableModal()">✕</button>
+            </div>
+            <form onsubmit="handleRecordCustomerReceivableSubmit(event)">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Sales Invoice / Export Ref No</label>
+                    <input type="text" id="rec-rec-inv-no" class="form-control" placeholder="e.g. EXP-2026-0041 / INV-8821">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Customer / Client Name *</label>
+                    <input type="text" id="rec-rec-customer-name" class="form-control" required placeholder="e.g. Thermax Process Div / Praj Industries">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Total Invoice Value (₹) *</label>
+                        <input type="number" step="0.01" id="rec-rec-total-value" class="form-control" required placeholder="385000">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Amount Received In (₹) *</label>
+                        <input type="number" step="0.01" id="rec-rec-received-amount" class="form-control" required placeholder="185000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Receipt Date *</label>
+                        <input type="date" id="rec-rec-date" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Collection Mode *</label>
+                        <select id="rec-rec-mode" class="form-control">
+                            <option value="RTGS / Bank Transfer">RTGS / Bank Transfer</option>
+                            <option value="NEFT">NEFT</option>
+                            <option value="UPI / QR">UPI / QR</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Letter of Credit (LC)">Letter of Credit (LC)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Transaction UTR / Ref Number</label>
+                    <input type="text" id="rec-rec-utr" class="form-control" placeholder="e.g. UTR-R20260811881">
+                </div>
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label">Credit Deposit Bank Account</label>
+                    <input type="text" id="rec-rec-bank" class="form-control" value="State Bank of India - Collection A/C">
+                </div>
+                <div class="form-group" style="margin-bottom: 18px;">
+                    <label class="form-label">Collection Notes</label>
+                    <textarea id="rec-rec-notes" class="form-control" rows="2" placeholder="e.g. 50% initial dispatch payment received."></textarea>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-outline" onclick="closeRecordCustomerReceivableModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">💰 Save Inward Collection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/js/config.js?v=1"></script>
+    <script src="/static/js/receiving.js?v=122"></script>
+    <script src="/static/js/dispatch.js?v=122"></script>
+    <script src="/static/js/exports.js?v=122"></script>
+    <script src="/static/js/pos.js?v=122"></script>
+    <script src="/static/js/payments.js?v=122"></script>
+    <script src="/static/js/app.js?v=122"></script>
+</body>
+</html>

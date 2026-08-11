@@ -22,10 +22,57 @@ async function fetchPaymentsData() {
 
         renderVendorPayablesTable(currentVendorPayables);
         renderCustomerReceivablesTable(currentCustomerReceivables);
+        checkTallyStatus();
     } catch (err) {
         console.error("Error fetching Payments Desk data:", err);
     }
 }
+
+// ═══════════════════════════════════════════════════════════
+// TALLY PRIME INTEGRATION MODULE (Computer B: 192.168.1.27:9000)
+// ═══════════════════════════════════════════════════════════
+window.checkTallyStatus = async function() {
+    try {
+        const res = await fetch('/api/tally/status');
+        const data = await res.json();
+        const statusEl = document.getElementById('tally-prime-status-badge');
+        if (statusEl) {
+            if (data.online) {
+                statusEl.className = 'badge bg-success text-white';
+                statusEl.innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> Tally Prime Connected (192.168.1.27:9000)';
+            } else {
+                statusEl.className = 'badge bg-warning text-dark';
+                statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Tally Offline';
+            }
+        }
+    } catch (e) {
+        console.log("Tally status check:", e);
+    }
+};
+
+window.syncPaymentToTally = async function(vendorName, amount, refNo, narration) {
+    try {
+        const res = await fetch('/api/tally/sync-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                vendorName,
+                amount: parseFloat(amount),
+                bankLedger: 'HDFC Bank',
+                refNo: refNo || `PAY-${Date.now()}`,
+                narration: narration || 'Payment via GateFlow Payments Desk'
+            })
+        });
+        const result = await res.json();
+        if (result.success) {
+            alert(`✅ ${result.message}`);
+        } else {
+            alert(`⚠️ Tally Sync Error: ${result.error || 'Failed to sync voucher'}`);
+        }
+    } catch (err) {
+        alert(`❌ Network Error: Could not reach Tally Prime server (${err.message})`);
+    }
+};
 
 // Update Top Financial Summary Cards
 function updatePaymentsSummaryCards(s) {

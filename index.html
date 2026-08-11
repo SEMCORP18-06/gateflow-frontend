@@ -1902,6 +1902,21 @@
 
             <!-- SECTION 1: VENDOR PAYABLES (PAYING) -->
             <div id="payments-section-payables" class="payments-sub-section">
+                <!-- TALLY PRIME INTEGRATION STATUS BANNER -->
+                <div style="background: linear-gradient(135deg, #1E3A8A 0%, #0F172A 100%); color: white; padding: 14px 18px; border-radius: 10px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.3rem;">📊</span>
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.95rem;">Tally Prime Integration Server</div>
+                            <div style="font-size: 0.78rem; color: #93C5FD;">Target IP: <strong>192.168.1.27:9000</strong></div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="tally-prime-status-badge" class="badge" style="background: #10B981; color: white; font-weight: 700; padding: 6px 12px;">🟢 Tally Prime Active (192.168.1.27:9000)</span>
+                        <button type="button" class="btn btn-sm" style="background: #2563EB; color: white; border: none; font-weight: 600;" onclick="fetchPaymentsData()">🔄 Fetch Tally Payments</button>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
                         <span>💸 Vendor Outward Payments (Accounts Payable)</span>
@@ -2364,12 +2379,12 @@
         </div>
     </div>
 
-    <script src="/static/js/config.js?v=1"></script>
-    <script src="/static/js/receiving.js?v=122"></script>
-    <script src="/static/js/dispatch.js?v=122"></script>
-    <script src="/static/js/exports.js?v=122"></script>
-    <script src="/static/js/pos.js?v=122"></script>
-    <script src="/static/js/payments.js?v=122"></script>
-    <script src="/static/js/app.js?v=122"></script>
+    <script src="/static/js/config.js?v=9999"></script>
+    <script src="/static/js/receiving.js?v=9999"></script>
+    <script src="/static/js/dispatch.js?v=9999"></script>
+    <script src="/static/js/exports.js?v=9999"></script>
+    <script src="/static/js/pos.js?v=9999"></script>
+    <script src="/static/js/payments.js?v=9999"></script>
+    <script src="/static/js/app.js?v=9999"></script>
 </body>
 </html>

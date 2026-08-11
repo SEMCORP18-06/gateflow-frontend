@@ -136,7 +136,22 @@ function renderVendorPayablesTable(payables) {
 
     tbody.innerHTML = '';
     if (!payables || payables.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding: 24px;">💸 No vendor payments recorded yet.</td></tr>`;
+        tbody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 32px 20px;">
+            <div style="max-width: 500px; margin: 0 auto; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 20px;">
+              <h6 style="font-weight: 700; color: #1E3A8A; margin-bottom: 6px;"><i class="fa-solid fa-server me-2"></i> Tally Prime Integration Active</h6>
+              <p style="font-size: 13px; color: #64748B; margin-bottom: 16px;">
+                Target: <code>http://192.168.1.27:9000</code><br>
+                No payment entries recorded yet. Click below to record a payment or refresh from Tally Prime.
+              </p>
+              <div style="display: flex; gap: 10px; justify-content: center;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="fetchPaymentsData()"><i class="fa-solid fa-rotate me-1"></i> Refresh Payments</button>
+                <button type="button" class="btn btn-outline btn-sm" style="border-color: #1E3A8A; color: #1E3A8A;" onclick="openAddVendorPayableModal()"><i class="fa-solid fa-plus me-1"></i> Record Payment</button>
+              </div>
+            </div>
+          </td>
+        </tr>`;
         return;
     }
 
@@ -146,9 +161,13 @@ function renderVendorPayablesTable(payables) {
         if (p.status === "Partially Paid") badgeClass = "badge-pending";
         if (p.status === "Unpaid") badgeClass = "badge-overdue";
 
+        const tallyTag = p.is_tally 
+          ? `<span class="badge" style="background:#15803D; color:white; font-size:10px; margin-left:4px;">Tally Prime</span>` 
+          : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong style="color: #1E3A8A;">${p.po_number || '-'}</strong></td>
+            <td><strong style="color: #1E3A8A;">${p.po_number || '-'}</strong>${tallyTag}</td>
             <td><strong>${p.vendor_name}</strong></td>
             <td>${p.payment_date || '-'}</td>
             <td><strong>₹ ${(p.bill_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
@@ -158,7 +177,7 @@ function renderVendorPayablesTable(payables) {
             <td>
                 <div style="display: flex; gap: 6px;">
                     <button type="button" class="btn btn-outline btn-sm" style="border-color: #1E3A8A; color: #1E3A8A;" onclick="viewPaymentDetails('${p.id}', 'payable')">👁️ Details</button>
-                    <button type="button" class="btn btn-outline btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="deletePaymentRecord('${p.id}', 'payable')">🗑️ Delete</button>
+                    ${p.is_tally ? '' : `<button type="button" class="btn btn-outline btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="deletePaymentRecord('${p.id}', 'payable')">🗑️ Delete</button>`}
                 </div>
             </td>
         `;

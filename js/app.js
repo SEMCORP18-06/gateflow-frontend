@@ -798,12 +798,23 @@ function renderQCProjectEngineerCards(packages) {
 
     packages.forEach(p => {
         const isApproved = p.status === 'QC Approved';
-        const isPending = p.status === 'Pending QC' || p.status === 'Draft' || !p.status;
+        const isNeedsRevision = p.status === 'Needs Revision';
+
+        let badgeHtml = `<span class="badge badge-pending">⌛ Pending QC Approval</span>`;
+        if (isApproved) {
+            badgeHtml = `<span class="badge badge-verified" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0;">✅ QC Approved — OK for Dispatch</span>`;
+        } else if (isNeedsRevision) {
+            badgeHtml = `<span class="badge" style="background:#FEF2F2; color:#DC2626; border:1px solid #FECACA;">⚠️ Revision Requested by QC Desk</span>`;
+        }
+
+        let borderLeftColor = "#7C3AED";
+        if (isApproved) borderLeftColor = "#059669";
+        if (isNeedsRevision) borderLeftColor = "#DC2626";
 
         const div = document.createElement("div");
         div.className = "card";
         div.style.background = "#FFFFFF";
-        div.style.borderLeft = isApproved ? "5px solid #059669" : "5px solid #7C3AED";
+        div.style.borderLeft = `5px solid ${borderLeftColor}`;
         div.style.marginBottom = "14px";
 
         let filesHtml = "";
@@ -822,10 +833,6 @@ function renderQCProjectEngineerCards(packages) {
         } else {
             filesHtml = `<span style="color: var(--text-muted); font-size: 0.85rem;">No document files attached.</span>`;
         }
-
-        const badgeHtml = isApproved 
-            ? `<span class="badge badge-verified" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0;">✅ QC Approved — OK for Dispatch</span>`
-            : `<span class="badge badge-pending">⌛ Pending QC Approval</span>`;
 
         div.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -887,19 +894,13 @@ function renderQCProjectEngineerCards(packages) {
                 <input type="text" id="qc-comments-input-${p.id}" class="form-control" placeholder="e.g. Approved by QC Manager. QAP & MTC verified against ASME Standards." style="font-size: 0.85rem;" value="${(p.qc_comments || 'Approved by QC Desk — OK for Dispatch').replace(/"/g, '&quot;')}">
             </div>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                ${isPending ? `
-                    <button type="button" class="btn btn-outline btn-sm" onclick="rejectPEQC('${p.id}')" style="border-color: #DC2626; color: #DC2626;">
-                        ❌ Reject Package
-                    </button>
-                    <button type="button" class="btn btn-success btn-sm" onclick="approvePEQC('${p.id}')" style="background: #059669; font-weight: 700;">
-                        👍 Approve Package (OK for Dispatch)
-                    </button>
-                ` : `
-                    <button type="button" class="btn btn-success btn-sm" onclick="approvePEQC('${p.id}')" style="background: #059669; font-weight: 700;">
-                        💾 Save / Update QC Certificates
-                    </button>
-                `}
+            <div style="display: flex; gap: 10px; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="rejectPEQC('${p.id}')" style="border-color: #DC2626; color: #DC2626; font-weight: 600;">
+                    ❌ Reject Package / Request Revision
+                </button>
+                <button type="button" class="btn btn-success btn-sm" onclick="approvePEQC('${p.id}')" style="background: #059669; border: none; font-weight: 700;">
+                    ${isApproved ? '💾 Update QC Certificates' : '👍 Approve Package (OK for Dispatch)'}
+                </button>
             </div>
         `;
         container.appendChild(div);

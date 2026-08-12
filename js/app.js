@@ -1,16 +1,31 @@
-// GateFlow Application Dedicated Authentication, Role Access Control & View Renderers
+window.refreshAllModuleData = function() {
+    if (typeof fetchReceivingRecords === 'function') fetchReceivingRecords();
+    if (typeof fetchProjectEngineerPackages === 'function') fetchProjectEngineerPackages();
+    if (typeof fetchProjectEngineerQCRecords === 'function') fetchProjectEngineerQCRecords();
+    if (typeof fetchDispatches === 'function') fetchDispatches();
+    if (typeof fetchNotifications === 'function') fetchNotifications();
+    if (typeof fetchPurchaseOrders === 'function') fetchPurchaseOrders();
+    if (typeof fetchVendorPayments === 'function') fetchVendorPayments();
+    if (typeof fetchMasterAdminDashboardSummary === 'function' && currentSessionUser && currentSessionUser.role === 'admin') {
+        fetchMasterAdminDashboardSummary();
+    }
+};
 
 document.addEventListener("DOMContentLoaded", () => {
-    fetchReceivingRecords();
-    fetchDispatches();
-    fetchNotifications();
-    fetchProjectEngineerPackages();
+    window.refreshAllModuleData();
     checkAuthSession();
     setTimeout(() => {
         if (typeof handleDeepLinkRouting === 'function') {
             handleDeepLinkRouting();
         }
     }, 400);
+
+    // Live background auto-sync every 8 seconds across all modules
+    setInterval(() => {
+        if (currentSessionUser) {
+            window.refreshAllModuleData();
+        }
+    }, 8000);
 });
 
 // ----------------------------------------------------
@@ -973,13 +988,11 @@ window.approvePEQC = async function(recordId) {
             const msg = fileCount > 0
                 ? `Project Engineer package approved with ${fileCount} additional file(s) and custom QC details saved!`
                 : "Project Engineer package approved and marked OK for Dispatch with custom QC details saved!";
-            await window.showAlertModal({ icon: "\ud83c\udf89", title: "Package Approved", message: msg });
-            fetchProjectEngineerQCRecords();
-            if (typeof fetchProjectEngineerPackages === 'function') fetchProjectEngineerPackages();
-            fetchNotifications();
+            await window.showAlertModal({ icon: "🎉", title: "Package Approved", message: msg });
+            if (typeof window.refreshAllModuleData === 'function') window.refreshAllModuleData();
         }
     } catch (err) {
-        window.showAlertModal({ icon: "\u274c", title: "Error", message: err.message });
+        window.showAlertModal({ icon: "❌", title: "Error", message: err.message });
     }
 };
 
@@ -997,9 +1010,7 @@ window.rejectPEQC = async function(recordId) {
         const res = await fetch(`/api/project-engineer/${recordId}/reject-qc`, { method: "POST" });
         if (res.ok) {
             await window.showAlertModal({ icon: "⚠️", title: "Revision Requested", message: "Package returned to Project Engineer for revision." });
-            fetchProjectEngineerQCRecords();
-            if (typeof fetchProjectEngineerPackages === 'function') fetchProjectEngineerPackages();
-            fetchNotifications();
+            if (typeof window.refreshAllModuleData === 'function') window.refreshAllModuleData();
         }
     } catch (err) {
         window.showAlertModal({ icon: "❌", title: "Error", message: err.message });

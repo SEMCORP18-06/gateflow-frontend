@@ -589,6 +589,7 @@ function switchMainTab(tabId, navBtn) {
     }
 
     if (tabId === 'receiving-tab') fetchReceivingRecords();
+    if (tabId === 'project-engineer-tab') fetchProjectEngineerPackages();
     if (tabId === 'calendar-tab') {
         fetchReceivingRecords();
         fetchDispatches();
@@ -601,6 +602,7 @@ function switchMainTab(tabId, navBtn) {
         fetchReceivingRecords();
         fetchDispatches();
         fetchProjectEngineerQCRecords();
+        fetchProjectEngineerPackages();
     }
     if (tabId === 'audit-tab') fetchNotifications();
     if (tabId === 'po-tab') {
@@ -674,8 +676,8 @@ function renderQCDispatchView(pendingDispatches) {
             <div style="margin-bottom: 16px;">
                 <strong style="font-size: 0.9rem; color: var(--semco-blue);">Uploaded Documents:</strong>
                 <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:6px;">
-                    ${d.supplier_invoice_doc ? `<a href="${d.supplier_invoice_doc}" target="_blank" class="btn btn-outline btn-sm">📄 Supplier Invoice</a>` : ''}
-                    ${d.supplier_challan_doc ? `<a href="${d.supplier_challan_doc}" target="_blank" class="btn btn-outline btn-sm">📜 Delivery Challan</a>` : ''}
+                    ${d.supplier_invoice_doc ? `<a href="${window.formatFileUrl ? window.formatFileUrl(d.supplier_invoice_doc) : d.supplier_invoice_doc}" target="_blank" class="btn btn-outline btn-sm">📄 Supplier Invoice</a>` : ''}
+                    ${d.supplier_challan_doc ? `<a href="${window.formatFileUrl ? window.formatFileUrl(d.supplier_challan_doc) : d.supplier_challan_doc}" target="_blank" class="btn btn-outline btn-sm">📜 Delivery Challan</a>` : ''}
                 </div>
             </div>
 
@@ -813,7 +815,7 @@ function renderQCProjectEngineerCards(packages) {
                             <strong style="color: #5B21B6; font-size: 0.85rem;">📁 ${f.file_name || 'Technical File'}</strong>
                             <span class="badge" style="background: #EDE9FE; color: #6D28D9; font-size: 0.72rem; margin-left: 6px;">${f.category || 'General'}</span>
                         </div>
-                        ${f.document_path ? `<a href="${f.document_path}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #7C3AED; color: #7C3AED;">📄 View File</a>` : ''}
+                        ${f.document_path ? `<a href="${window.formatFileUrl ? window.formatFileUrl(f.document_path) : f.document_path}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #7C3AED; color: #7C3AED;">📄 View File</a>` : ''}
                     </div>
                 `;
             });
@@ -1463,7 +1465,7 @@ function renderProjectEngineerTable(packages) {
         const filesHtml = (pkg.files || []).map(f => `
             <div style="margin-bottom: 4px;">
                 <span class="badge" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE;">${f.category}</span>
-                <a href="${f.document_path || '#'}" target="_blank" style="font-size: 0.8rem; text-decoration: underline; margin-left: 4px; color: #4C1D95;">${f.file_name}</a>
+                <a href="${window.formatFileUrl ? window.formatFileUrl(f.document_path) : (f.document_path || '#')}" target="_blank" style="font-size: 0.8rem; text-decoration: underline; margin-left: 4px; color: #4C1D95;">${f.file_name}</a>
                 ${f.notes ? `<div style="font-size: 0.72rem; color: #64748B;">Note: ${f.notes}</div>` : ''}
             </div>
         `).join("") || `<span style="color:var(--text-muted); font-size:0.8rem;">No files</span>`;

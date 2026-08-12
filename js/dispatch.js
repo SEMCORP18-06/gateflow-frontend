@@ -12,7 +12,7 @@ function buildQCApprovedDocsHtml(d, compact = false) {
             let filesLinks = "";
             if (pkg.files && pkg.files.length > 0) {
                 filesLinks = pkg.files.map(f => `
-                    <a href="${f.document_path || '#'}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #047857; text-decoration: underline; margin-right: 8px;">
+                    <a href="${window.formatFileUrl ? window.formatFileUrl(f.document_path) : (f.document_path || '#')}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #047857; text-decoration: underline; margin-right: 8px;">
                         <span class="badge" style="background:#EDE9FE; color:#5B21B6; border:1px solid #DDD6FE; font-size:0.68rem; padding:1px 5px;">${f.category || 'Doc'}</span>
                         ${f.file_name || 'File'}
                     </a>
@@ -40,7 +40,7 @@ function buildQCApprovedDocsHtml(d, compact = false) {
     // Additional files uploaded during dispatch
     if (d.additional_files && d.additional_files.length > 0) {
         const addlHtml = d.additional_files.map(f => `
-            <a href="${f.document_path || '#'}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; color:#B45309; text-decoration:underline; margin-right:8px;">
+            <a href="${window.formatFileUrl ? window.formatFileUrl(f.document_path) : (f.document_path || '#')}" target="_blank" style="display:inline-flex; align-items:center; gap:4px; font-size:0.78rem; color:#B45309; text-decoration:underline; margin-right:8px;">
                 📎 ${f.file_name || 'Additional File'}
             </a>
         `).join('');
@@ -263,7 +263,7 @@ window.loadQCApprovedDocsForDispatch = async function() {
                 filesHtml = pkg.files.map(f => `
                     <div style="display: flex; align-items: center; gap: 8px; padding: 4px 0;">
                         <span class="badge" style="background: #EDE9FE; color: #5B21B6; border: 1px solid #DDD6FE; font-size: 0.72rem;">${f.category || 'General'}</span>
-                        <a href="${f.document_path || '#'}" target="_blank" style="font-size: 0.8rem; color: #047857; text-decoration: underline;">${f.file_name || 'File'}</a>
+                        <a href="${window.formatFileUrl ? window.formatFileUrl(f.document_path) : (f.document_path || '#')}" target="_blank" style="font-size: 0.8rem; color: #047857; text-decoration: underline;">${f.file_name || 'File'}</a>
                     </div>
                 `).join("");
             } else {

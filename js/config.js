@@ -17,6 +17,19 @@
         return "https://gateflow-backend.vercel.app";
     };
 
+    window.formatFileUrl = function(path) {
+        if (!path || path === '#') return '#';
+        if (typeof path !== 'string') return '#';
+        if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+            return path;
+        }
+        const backend = window.getBackendUrl ? window.getBackendUrl() : '';
+        if (path.startsWith('/')) {
+            return backend + path;
+        }
+        return backend + '/' + path;
+    };
+
     // Override fetch wrapper to automatically prepend backend URL to /api/ requests
     const originalFetch = window.fetch;
     window.fetch = function(resource, init) {

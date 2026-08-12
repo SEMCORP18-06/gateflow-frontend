@@ -100,13 +100,13 @@ function renderReceivingTable(records) {
 
         let docsHtml = `<div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">`;
         if (challanDocPath) {
-            docsHtml += `<a href="${challanDocPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #D97706; color: #D97706; font-size: 0.75rem; font-weight: 600;">📜 Challan Doc</a>`;
+            docsHtml += `<a href="${window.formatFileUrl ? window.formatFileUrl(challanDocPath) : challanDocPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #D97706; color: #D97706; font-size: 0.75rem; font-weight: 600;">📜 Challan Doc</a>`;
         } else {
             docsHtml += `<span style="font-size: 0.75rem; color: var(--text-muted);">📜 No Challan</span>`;
         }
 
         if (invDocPath) {
-            docsHtml += `<a href="${invDocPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: var(--semco-blue); color: var(--semco-blue); font-size: 0.75rem; font-weight: 600;">📄 Invoice Doc</a>`;
+            docsHtml += `<a href="${window.formatFileUrl ? window.formatFileUrl(invDocPath) : invDocPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: var(--semco-blue); color: var(--semco-blue); font-size: 0.75rem; font-weight: 600;">📄 Invoice Doc</a>`;
         } else {
             docsHtml += `<span style="font-size: 0.75rem; color: var(--text-muted);">📄 No Invoice</span>`;
         }
@@ -1037,7 +1037,8 @@ window.previewReceivingRecord = async function(recordId) {
     if (titleEl) titleEl.innerText = `Invoice #${record.invoice_number} — Document Verification`;
     if (subtitleEl) subtitleEl.innerText = `Vendor: ${record.vendor_name} | Amount: ₹${(record.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})} | Status: ${record.status}`;
 
-    const docPath = record.document_path || "";
+    const rawDocPath = record.document_path || "";
+    const docPath = window.formatFileUrl ? window.formatFileUrl(rawDocPath) : rawDocPath;
     let viewerHtml = "";
 
     if (docPath) {
@@ -1168,7 +1169,8 @@ window.closeReceivingPreviewModal = function() {
 
 // Preview during OCR editing phase (before record is saved)
 window.previewCurrentOCRScan = function() {
-    const docPath = pendingOCRPath || (document.getElementById("rec-document-path") ? document.getElementById("rec-document-path").value : "");
+    const rawPath = pendingOCRPath || (document.getElementById("rec-document-path") ? document.getElementById("rec-document-path").value : "");
+    const docPath = window.formatFileUrl ? window.formatFileUrl(rawPath) : rawPath;
     const fields = currentExtractedFields || {};
 
     const modal = document.getElementById("receiving-preview-modal");

@@ -908,24 +908,92 @@ tr:hover {
    PRINT OPTIMIZATION FOR SEMCO PURCHASE ORDERS
    ---------------------------------------------------- */
 @media print {
-    /* Hide all web application elements by default during print */
-    body * {
-        visibility: hidden !important;
+    /* Hide top header, navbars, main content container, and all sibling modals */
+    header,
+    nav,
+    main,
+    footer,
+    .top-module-nav,
+    .bottom-nav,
+    .modal-backdrop:not(#semco-po-preview-modal),
+    .po-print-hide,
+    .btn,
+    button,
+    ::-webkit-scrollbar {
+        display: none !important;
     }
 
-    /* Unhide ONLY the official SEMCO PO document container and all its internal contents */
-    #semco-printable-po-doc,
-    #semco-printable-po-doc * {
-        visibility: visible !important;
+    /* Reset body background & overflow for print */
+    html, body {
+        background: #FFFFFF !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
     }
 
-    /* Position the printable PO document precisely at top-left of the page */
-    #semco-printable-po-doc {
+    /* Transform #semco-po-preview-modal into a static full-page print container */
+    #semco-po-preview-modal {
+        display: block !important;
         position: absolute !important;
         left: 0 !important;
         top: 0 !important;
+        inset: 0 auto auto 0 !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: #FFFFFF !important;
+        backdrop-filter: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        z-index: 999999 !important;
+    }
+
+    /* Expand modal-card to full page height & remove fixed height/scrollbars */
+    #semco-po-preview-modal .modal-card {
+        display: block !important;
+        position: relative !important;
         width: 100% !important;
         max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #FFFFFF !important;
+    }
+
+    /* Hide the top header bar of the modal */
+    #semco-po-preview-modal .modal-card > div:first-child {
+        display: none !important;
+    }
+
+    #semco-po-modal-body {
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* Target the official SEMCO PO Document */
+    #semco-printable-po-doc {
+        display: block !important;
+        position: relative !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
         margin: 0 !important;
         padding: 16px !important;
         border: 2px solid #0F172A !important;
@@ -933,21 +1001,6 @@ tr:hover {
         background: #FFFFFF !important;
         color: #000000 !important;
         box-sizing: border-box !important;
-    }
-
-    /* Reset page background and scrollbars */
-    html, body {
-        background: #FFFFFF !important;
-        color: #000000 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: visible !important;
-    }
-
-    /* Hide buttons and print-hide elements */
-    .po-print-hide, .btn, button {
-        display: none !important;
-        visibility: hidden !important;
     }
 
     @page {

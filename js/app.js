@@ -806,12 +806,15 @@ function renderQCProjectEngineerCards(packages) {
     if (!container) return;
     container.innerHTML = "";
 
-    if (!packages || packages.length === 0) {
-        container.innerHTML = `<p style="color: var(--text-muted); padding: 10px 0;">No technical packages currently recorded in repository.</p>`;
+    // Filter out rejected packages ('Needs Revision') so they are returned to Project Engineer Desk
+    const activePackages = (packages || []).filter(p => p.status !== 'Needs Revision');
+
+    if (!activePackages || activePackages.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-muted); padding: 10px 0;">No active technical packages currently pending QC review.</p>`;
         return;
     }
 
-    packages.forEach(p => {
+    activePackages.forEach(p => {
         const isApproved = p.status === 'QC Approved';
         const isNeedsRevision = p.status === 'Needs Revision';
 

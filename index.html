@@ -1472,7 +1472,34 @@
 
             </div>
 
-
+            <!-- QC APPROVAL AUDIT LOG (Admin Only) -->
+            <div class="card" style="border-top: 5px solid #7C3AED; margin-top: 24px;">
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>🛡️ QC Approval Audit Log</span>
+                    <span class="badge" style="background: #F5F3FF; color: #6D28D9; border: 1px solid #DDD6FE;">Admin Only</span>
+                </div>
+                <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 14px;">
+                    Complete record of all QC approvals across Receiving, Project Engineer, and Dispatch modules. Shows who approved each record and when.
+                </p>
+                <div style="overflow-x: auto;">
+                    <table class="data-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #F8FAFC;">
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Module</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Reference</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Vendor / Engineer</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Approved By</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Comments</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Date & Time</th>
+                                <th style="padding: 10px 12px; text-align: left; font-size: 0.78rem; font-weight: 700; color: #1E293B; border-bottom: 2px solid #E2E8F0;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="qc-approval-log-tbody">
+                            <tr><td colspan="7" style="text-align: center; padding: 20px; color: #94A3B8; font-style: italic;">Loading approval records...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
 
         </section>
 

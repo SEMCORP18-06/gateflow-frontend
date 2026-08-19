@@ -9,6 +9,7 @@ window.refreshAllModuleData = function() {
     if (typeof fetchMasterAdminDashboardSummary === 'function' && currentSessionUser && currentSessionUser.role === 'admin') {
         fetchMasterAdminDashboardSummary();
     }
+    if (typeof fetchQCApprovalLog === 'function') fetchQCApprovalLog();
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -714,22 +715,32 @@ function renderQCDispatchView(pendingDispatches) {
 }
 
 window.approveDispatchQC = async function(dispatchId) {
+    const approverName = prompt("Approved By: Enter your full name to authorize this QC approval:");
+    if (!approverName || !approverName.trim()) {
+        window.showAlertModal({ icon: "⚠️", title: "Name Required", message: "You must enter your name to approve. Approval cancelled." });
+        return;
+    }
+
     const confirmed = await window.showConfirmModal({
         icon: "🛡️",
         title: "Approve QC Gate Inspection",
-        message: "Are you sure you want to approve this Dispatch Bundle as 'OK for Dispatch'? This will trigger automated Client Email & Transporter SMS.",
+        message: `Approved By: ${approverName.trim()}\n\nAre you sure you want to approve this Dispatch Bundle as 'OK for Dispatch'? This will trigger automated Client Email & Transporter SMS.`,
         proceedText: "👍 Approve & Trigger Workflows",
         proceedClass: "btn-success"
     });
     if (!confirmed) return;
 
     try {
-        const res = await fetch(`/api/dispatch/${dispatchId}/approve`, { method: "POST" });
+        const res = await fetch(`/api/dispatch/${dispatchId}/approve`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ qc_approved_by: approverName.trim() })
+        });
         const approved = await res.json();
         await window.showAlertModal({
             icon: "🛡️",
             title: "QC Inspection Approved!",
-            message: `QC Approval granted for Bundle #${approved.dispatch_number}!\n\nThe dispatch bundle has been forwarded to the Dispatch Module for final clearance & vehicle release.`
+            message: `QC Approval granted for Bundle #${approved.dispatch_number}!\n\nApproved By: ${approverName.trim()}\n\nThe dispatch bundle has been forwarded to the Dispatch Module for final clearance & vehicle release.`
         });
         fetchDispatches();
         fetchNotifications();
@@ -935,10 +946,16 @@ function renderQCProjectEngineerCards(packages) {
 }
 
 window.approvePEQC = async function(recordId) {
+    const approverName = prompt("Approved By: Enter your full name to authorize this QC approval:");
+    if (!approverName || !approverName.trim()) {
+        window.showAlertModal({ icon: "⚠️", title: "Name Required", message: "You must enter your name to approve. Approval cancelled." });
+        return;
+    }
+
     const confirmed = await window.showConfirmModal({
         icon: "📐",
         title: "Approve Technical Package",
-        message: "Approve this Project Engineer package? The technical drawings and MTCs will be marked 'OK for Dispatch'.",
+        message: `Approved By: ${approverName.trim()}\n\nApprove this Project Engineer package? The technical drawings and MTCs will be marked 'OK for Dispatch'.`,
         proceedText: "👍 Approve & Clear for Dispatch",
         proceedClass: "btn-success"
     });
@@ -980,6 +997,7 @@ window.approvePEQC = async function(recordId) {
         });
     }
     formData.append("qc_file_categories_json", JSON.stringify(fileCategoriesList));
+    formData.append("qc_approved_by", approverName.trim());
 
     try {
         const res = await fetch(`/api/project-engineer/${recordId}/approve-qc`, {
@@ -989,8 +1007,8 @@ window.approvePEQC = async function(recordId) {
         if (res.ok) {
             const fileCount = fileCategoriesList.length;
             const msg = fileCount > 0
-                ? `Project Engineer package approved with ${fileCount} additional file(s) and custom QC details saved!`
-                : "Project Engineer package approved and marked OK for Dispatch with custom QC details saved!";
+                ? `Project Engineer package approved with ${fileCount} additional file(s) and custom QC details saved!\n\nApproved By: ${approverName.trim()}`
+                : `Project Engineer package approved and marked OK for Dispatch with custom QC details saved!\n\nApproved By: ${approverName.trim()}`;
             await window.showAlertModal({ icon: "🎉", title: "Package Approved", message: msg });
             if (typeof window.refreshAllModuleData === 'function') window.refreshAllModuleData();
         }
@@ -1722,3 +1740,38 @@ document.addEventListener("DOMContentLoaded", () => {
         initProjectEngineerFormRows();
     }, 300);
 });
+
+// ===== QC APPROVAL AUDIT LOG (Admin Dashboard Only) =====
+window.fetchQCApprovalLog = async function() {
+    try {
+        const res = await fetch('/api/admin/qc-approval-log');
+        const log = await res.json();
+        const tbody = document.getElementById('qc-approval-log-tbody');
+        if (!tbody) return;
+
+        if (!log || log.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #94A3B8; font-style: italic;">No QC approval records found.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = log.map(entry => {
+            const moduleBadge = entry.module === 'Receiving'
+                ? '<span class="badge" style="background: #DBEAFE; color: #1E40AF; font-size: 0.7rem;">Receiving</span>'
+                : entry.module === 'Project Engineer'
+                    ? '<span class="badge" style="background: #F5F3FF; color: #6D28D9; font-size: 0.7rem;">Project Engg</span>'
+                    : '<span class="badge" style="background: #ECFDF5; color: #047857; font-size: 0.7rem;">Dispatch</span>';
+
+            return `<tr style="border-bottom: 1px solid #F1F5F9;">
+                <td style="padding: 10px 12px; font-size: 0.82rem;">${moduleBadge}</td>
+                <td style="padding: 10px 12px; font-size: 0.82rem; font-weight: 600;">${entry.reference || 'N/A'}</td>
+                <td style="padding: 10px 12px; font-size: 0.82rem;">${entry.vendor || '-'}</td>
+                <td style="padding: 10px 12px; font-size: 0.82rem; font-weight: 700; color: #1E3A8A;">✍️ ${entry.approved_by || 'N/A'}</td>
+                <td style="padding: 10px 12px; font-size: 0.78rem; color: #64748B; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(entry.qc_comments || '').replace(/"/g, '&quot;')}">${entry.qc_comments || '-'}</td>
+                <td style="padding: 10px 12px; font-size: 0.78rem; color: #64748B;">${entry.approved_at || '-'}</td>
+                <td style="padding: 10px 12px;"><span class="badge badge-verified" style="background:#ECFDF5; color:#047857; border:1px solid #A7F3D0; font-size: 0.7rem;">${entry.status}</span></td>
+            </tr>`;
+        }).join('');
+    } catch (err) {
+        console.error('Error fetching QC approval log:', err);
+    }
+};

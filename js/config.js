@@ -1,5 +1,7 @@
 // GateFlow Frontend Configuration & Dynamic API Resolution Engine
 (function() {
+    const CLOUD_BACKEND = "https://gateflow-backend.vercel.app";
+
     window.getBackendUrl = function() {
         const customUrl = localStorage.getItem("gateflow_backend_url");
         if (customUrl) return customUrl.replace(/\/$/, "");
@@ -14,7 +16,7 @@
             return "http://localhost:5000";
         }
 
-        return "https://gateflow-backend.vercel.app";
+        return CLOUD_BACKEND;
     };
 
     window.formatFileUrl = function(path) {
@@ -30,13 +32,28 @@
         return backend + '/' + path;
     };
 
-    // Override fetch wrapper to automatically prepend backend URL to /api/ requests
+    // Override fetch wrapper to automatically prepend backend URL to /api/ requests with failover
     const originalFetch = window.fetch;
-    window.fetch = function(resource, init) {
+    window.fetch = async function(resource, init) {
         if (typeof resource === 'string' && resource.startsWith('/api/')) {
-            const backend = window.getBackendUrl();
-            if (backend) {
-                resource = backend + resource;
+            const primaryBackend = window.getBackendUrl();
+            const targetUrl = (primaryBackend ? primaryBackend : "") + resource;
+            
+            try {
+                const response = await originalFetch.call(this, targetUrl, init);
+                return response;
+            } catch (err) {
+                // If primary local server is down, automatically fail over to live cloud backend
+                if (primaryBackend && primaryBackend !== CLOUD_BACKEND) {
+                    console.warn(`[GateFlow] Primary backend (${primaryBackend}) unavailable, retrying on cloud backend (${CLOUD_BACKEND})...`);
+                    try {
+                        return await originalFetch.call(this, CLOUD_BACKEND + resource, init);
+                    } catch (cloudErr) {
+                        console.error("[GateFlow] Cloud backend also unavailable:", cloudErr);
+                        throw cloudErr;
+                    }
+                }
+                throw err;
             }
         }
         return originalFetch.call(this, resource, init);

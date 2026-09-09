@@ -353,10 +353,14 @@
                             <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('ch1-camera-input').click()" style="border-color: #D97706; color: #D97706; background: #FFFFFF;">📱 📷 Snap Challan Photo</button>
                             </div>
-                            <input type="file" id="ch1-file-input" accept="image/*,.pdf" class="form-control">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="file" id="ch1-file-input" accept="image/*,.pdf" class="form-control" onchange="handleSection1FileChange(this)">
+                                <button type="button" id="ch1-discard-btn" class="btn btn-outline btn-sm" onclick="discardSection1File()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                            </div>
                             <input type="file" id="ch1-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleSection1CameraUpload(this)">
-                            <div id="ch1-file-badge" style="display:none; margin-top:8px;">
+                            <div id="ch1-file-badge" style="display:none; margin-top:8px; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="badge badge-verified" id="ch1-file-name">File attached</span>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="discardSection1File()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
                             </div>
                         </div>
 
@@ -464,11 +468,15 @@
                             <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="triggerChallanMobileCamera()" style="border-color: #D97706; color: #D97706; background: #FFFFFF;">📱 📷 Snap Challan Photo</button>
                             </div>
-                            <input type="file" id="rec-challan-file-input" accept="image/*,.pdf" class="form-control" onchange="handleChallanFileUpload(this)">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="file" id="rec-challan-file-input" accept="image/*,.pdf" class="form-control" onchange="handleChallanFileUpload(this)">
+                                <button type="button" id="rec-challan-discard-btn" class="btn btn-outline btn-sm" onclick="discardReceivingChallanFile()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                            </div>
                             <input type="file" id="rec-challan-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleChallanCameraUpload(this)">
                             <input type="hidden" id="rec-challan-doc-path" name="challan_doc_path" form="receiving-save-form" value="">
-                            <div id="rec-challan-file-badge" style="display:none; margin-top: 8px;">
+                            <div id="rec-challan-file-badge" style="display:none; margin-top: 8px; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="badge badge-verified" id="rec-challan-file-name">✅ Challan Document Attached</span>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="discardReceivingChallanFile()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
                             </div>
                         </div>
                     </div>
@@ -498,7 +506,14 @@
                         <form id="ocr-upload-form" enctype="multipart/form-data" style="background: #F8FAFC; padding: 14px; border-radius: 10px; border: 1px solid var(--border-color); margin-bottom: 18px;">
                             <div class="form-group" style="margin-bottom: 10px;">
                                 <label class="form-label">Upload Invoice File (PDF, JPEG, PNG)</label>
-                                <input type="file" id="ocr-file-input" accept="image/*,.pdf" class="form-control">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="file" id="ocr-file-input" accept="image/*,.pdf" class="form-control" onchange="handleOCRFileInputChange(this)">
+                                    <button type="button" id="ocr-file-discard-btn" class="btn btn-outline btn-sm" onclick="discardOCRFileInput()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                                </div>
+                                <div id="ocr-file-badge" style="display: none; margin-top: 8px; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span class="badge badge-verified" id="ocr-file-name">Invoice selected</span>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="discardOCRFileInput()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-outline" id="btn-ocr-scan" style="width: 100%; border-color: var(--semco-blue); color: var(--semco-blue); font-weight: 600;">
                                 🔍 Scan Selected Invoice & Extract Metadata
@@ -510,9 +525,12 @@
                             <input type="hidden" id="rec-id" name="id">
                             <input type="hidden" id="rec-document-path" name="document_path">
 
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
                                 <strong style="color: var(--semco-blue); font-size: 0.95rem;">📝 Extracted Invoice Metadata</strong>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="previewCurrentOCRScan()" style="border-color: var(--semco-blue); color: var(--semco-blue);">👁️ Document Preview</button>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" id="rec-discard-doc-btn" class="btn btn-outline btn-sm" onclick="discardReceivingInvoiceDoc()" style="display: none; border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.8rem;">🗑️ Discard Doc</button>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="previewCurrentOCRScan()" style="border-color: var(--semco-blue); color: var(--semco-blue);">👁️ Document Preview</button>
+                                </div>
                             </div>
 
                             <div class="form-row">
@@ -584,14 +602,18 @@
                             </div>
                             <div class="form-group" style="margin-top: 8px;">
                                 <label class="form-label" style="color: #92400E; font-weight: 600;">📎 Attach Delivery Challan Document (Photo / PDF)</label>
-                                <input type="file" id="manual-challan-file-input" accept="image/*,.pdf" class="form-control" style="margin-bottom: 6px;" onchange="handleManualChallanFileUpload(this)">
+                                <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                                    <input type="file" id="manual-challan-file-input" accept="image/*,.pdf" class="form-control" onchange="handleManualChallanFileUpload(this)">
+                                    <button type="button" id="manual-challan-discard-btn" class="btn btn-outline btn-sm" onclick="discardManualChallanFile()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                                </div>
                                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                     <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('manual-challan-camera-input').click()" style="border-color: #D97706; color: #D97706; background: #FFF;">📱 Snap Challan Photo</button>
                                 </div>
                                 <input type="file" id="manual-challan-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleManualChallanFileUpload(this)">
                                 <input type="hidden" id="manual-challan-doc-path" value="">
-                                <div id="manual-challan-file-preview" style="margin-top: 8px; display: none;">
+                                <div id="manual-challan-file-preview" style="margin-top: 8px; display: none; align-items: center; gap: 8px; flex-wrap: wrap;">
                                     <span class="badge badge-verified" id="manual-challan-file-name">Challan Attached</span>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="discardManualChallanFile()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
                                 </div>
                             </div>
                         </div>
@@ -707,13 +729,17 @@
                         <div style="background: #EFF6FF; padding: 14px; border-radius: 12px; border: 1px solid #BFDBFE; margin-bottom: 14px;">
                             <strong style="color: var(--semco-blue); font-size: 0.9rem; display: block; margin-bottom: 10px;">📎 Attach Invoice Document</strong>
                             <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">Upload the original invoice file (PDF, JPEG, PNG) or snap a photo.</p>
-                            <input type="file" id="manual-file-input" accept="image/*,.pdf" class="form-control" style="margin-bottom: 8px;">
+                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+                                <input type="file" id="manual-file-input" accept="image/*,.pdf" class="form-control" onchange="handleManualFileInputChange(this)">
+                                <button type="button" id="manual-file-discard-btn" class="btn btn-outline btn-sm" onclick="discardManualInvoiceFile()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                            </div>
                             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="triggerManualCameraCapture()" style="border-color: var(--semco-blue); color: var(--semco-blue);">📱 Snap with Camera</button>
                             </div>
                             <input type="file" id="manual-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleManualCameraCapture(this)">
-                            <div id="manual-file-preview" style="margin-top: 10px; display: none;">
+                            <div id="manual-file-preview" style="margin-top: 10px; display: none; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="badge badge-verified" id="manual-file-name">File attached</span>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="discardManualInvoiceFile()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
                             </div>
                         </div>
 
@@ -892,10 +918,14 @@
                             <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('s3m-camera-input').click()" style="border-color: #059669; color: #059669; background: #FFFFFF;">📱 📷 Snap Invoice Photo</button>
                             </div>
-                            <input type="file" id="s3m-file-input" accept="image/*,.pdf" class="form-control">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="file" id="s3m-file-input" accept="image/*,.pdf" class="form-control" onchange="handleSection3FileInputChange(this)">
+                                <button type="button" id="s3m-discard-btn" class="btn btn-outline btn-sm" onclick="discardSection3File()" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                            </div>
                             <input type="file" id="s3m-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="handleSection3CameraUpload(this)">
-                            <div id="s3m-file-badge" style="display:none; margin-top:8px;">
+                            <div id="s3m-file-badge" style="display:none; margin-top:8px; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span class="badge badge-verified" id="s3m-file-name">File attached</span>
+                                <button type="button" class="btn btn-outline btn-sm" onclick="discardSection3File()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
                             </div>
                         </div>
                         <input type="hidden" id="s3m-document-path" value="">
@@ -1132,11 +1162,25 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Upload Invoice Document</label>
-                                <input type="file" name="supplier_invoice_file" accept="image/*,.pdf" class="form-control">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="file" name="supplier_invoice_file" id="disp-supplier-invoice-file" accept="image/*,.pdf" class="form-control" onchange="handleDispatchFileInputChange(this, 'disp-inv-discard-btn', 'disp-inv-badge', 'disp-inv-filename')">
+                                    <button type="button" id="disp-inv-discard-btn" class="btn btn-outline btn-sm" onclick="discardDispatchFile('disp-supplier-invoice-file', 'disp-inv-discard-btn', 'disp-inv-badge')" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                                </div>
+                                <div id="disp-inv-badge" style="display:none; margin-top:6px; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span class="badge badge-verified" id="disp-inv-filename">Invoice attached</span>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="discardDispatchFile('disp-supplier-invoice-file', 'disp-inv-discard-btn', 'disp-inv-badge')" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Upload Delivery Challan Document</label>
-                                <input type="file" name="supplier_challan_file" accept="image/*,.pdf" class="form-control">
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="file" name="supplier_challan_file" id="disp-supplier-challan-file" accept="image/*,.pdf" class="form-control" onchange="handleDispatchFileInputChange(this, 'disp-ch-discard-btn', 'disp-ch-badge', 'disp-ch-filename')">
+                                    <button type="button" id="disp-ch-discard-btn" class="btn btn-outline btn-sm" onclick="discardDispatchFile('disp-supplier-challan-file', 'disp-ch-discard-btn', 'disp-ch-badge')" style="display: none; border-color: #EF4444; color: #EF4444; white-space: nowrap; height: 38px; align-items: center; gap: 4px;">🗑️ Discard</button>
+                                </div>
+                                <div id="disp-ch-badge" style="display:none; margin-top:6px; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span class="badge badge-verified" id="disp-ch-filename">Challan attached</span>
+                                    <button type="button" class="btn btn-outline btn-sm" onclick="discardDispatchFile('disp-supplier-challan-file', 'disp-ch-discard-btn', 'disp-ch-badge')" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: auto;">🗑️ Discard File</button>
+                                </div>
                             </div>
                         </div>
 
@@ -2406,12 +2450,12 @@
         </div>
     </div>
 
-    <script src="./js/config.js?v=9999"></script>
-    <script src="./js/receiving.js?v=9999"></script>
-    <script src="./js/dispatch.js?v=9999"></script>
-    <script src="./js/exports.js?v=9999"></script>
-    <script src="./js/pos.js?v=10001"></script>
-    <script src="./js/payments.js?v=9999"></script>
-    <script src="./js/app.js?v=9999"></script>
+    <script src="./js/config.js?v=10005"></script>
+    <script src="./js/receiving.js?v=10005"></script>
+    <script src="./js/dispatch.js?v=10005"></script>
+    <script src="./js/exports.js?v=10005"></script>
+    <script src="./js/pos.js?v=10005"></script>
+    <script src="./js/payments.js?v=10005"></script>
+    <script src="./js/app.js?v=10005"></script>
 </body>
 </html>

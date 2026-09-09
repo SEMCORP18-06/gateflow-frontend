@@ -906,8 +906,11 @@ window.addQCFileRow = function(pkgId) {
             <option value="Packing List">📦 Packing List</option>
             <option value="Other QC Document">📄 Other QC Document</option>
         </select>
-        <input type="file" class="form-control qc-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx,.zip" style="flex: 1.2; font-size: 0.82rem;">
-        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('${rowId}').remove()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem;">✖</button>
+        <div style="display: flex; flex: 1.2; gap: 6px; align-items: center;">
+            <input type="file" class="form-control qc-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx,.zip" style="font-size: 0.82rem;" onchange="handleGenericFileInputChange(this, '${rowId}-discard')">
+            <button type="button" id="${rowId}-discard" class="btn btn-outline btn-sm" onclick="clearSpecificFileInput(this.previousElementSibling, this)" style="display: none; border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; white-space: nowrap; height: 32px;" title="Discard selected file">🗑️ Discard</button>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('${rowId}').remove()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: 32px;" title="Remove row">✖</button>
     `;
 
     container.appendChild(div);
@@ -1515,7 +1518,10 @@ window.addProjectEngineerFileRow = function() {
         <div class="form-row">
             <div class="form-group" style="flex: 1;">
                 <label class="form-label">Select File (PDF, Image, Photo, CAD, Sheet) *</label>
-                <input type="file" class="form-control pe-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx,.xls,.dwg,.dxf,.step,.stp,.iges,.ppt,.pptx,.csv,.txt,.zip,.rar" required>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    <input type="file" class="form-control pe-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx,.xls,.dwg,.dxf,.step,.stp,.iges,.ppt,.pptx,.csv,.txt,.zip,.rar" required onchange="handleGenericFileInputChange(this, '${rowId}-discard')">
+                    <button type="button" id="${rowId}-discard" class="btn btn-outline btn-sm" onclick="clearSpecificFileInput(this.previousElementSibling, this)" style="display: none; border-color: #EF4444; color: #EF4444; padding: 4px 8px; font-size: 0.75rem; white-space: nowrap; height: 38px;" title="Discard selected file">🗑️ Discard</button>
+                </div>
             </div>
             <div class="form-group" style="flex: 1;">
                 <label class="form-label">Manual File Category Tag *</label>

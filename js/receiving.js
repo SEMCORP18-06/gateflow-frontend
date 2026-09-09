@@ -285,28 +285,63 @@ window.triggerChallanMobileCamera = function() {
 
 window.handleChallanFileUpload = async function(input) {
     if (!input.files || !input.files[0]) return;
+    const discardBtn = document.getElementById("rec-challan-discard-btn");
+    if (discardBtn) discardBtn.style.display = "inline-flex";
     await uploadChallanFile(input.files[0]);
 };
 
 window.handleChallanCameraUpload = async function(input) {
     if (!input.files || !input.files[0]) return;
+    const discardBtn = document.getElementById("rec-challan-discard-btn");
+    if (discardBtn) discardBtn.style.display = "inline-flex";
     await uploadChallanFile(input.files[0]);
+};
+
+window.discardReceivingChallanFile = function() {
+    const fileInput = document.getElementById("rec-challan-file-input");
+    const camInput = document.getElementById("rec-challan-camera-input");
+    const pathInput = document.getElementById("rec-challan-doc-path");
+    const badge = document.getElementById("rec-challan-file-badge");
+    const discardBtn = document.getElementById("rec-challan-discard-btn");
+
+    if (fileInput) fileInput.value = "";
+    if (camInput) camInput.value = "";
+    if (pathInput) pathInput.value = "";
+    if (badge) badge.style.display = "none";
+    if (discardBtn) discardBtn.style.display = "none";
 };
 
 window.handleManualChallanFileUpload = async function(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
+    const discardBtn = document.getElementById("manual-challan-discard-btn");
+    if (discardBtn) discardBtn.style.display = "inline-flex";
     const formData = new FormData();
     formData.append("file", file);
     try {
         const res = await fetch("/api/receiving/upload-file", { method: "POST", body: formData });
         const data = await res.json();
         document.getElementById("manual-challan-doc-path").value = data.document_path || "";
-        document.getElementById("manual-challan-file-preview").style.display = "block";
+        const preview = document.getElementById("manual-challan-file-preview");
+        if (preview) preview.style.display = "inline-flex";
         document.getElementById("manual-challan-file-name").textContent = `✅ ${file.name} Attached`;
     } catch (err) {
         console.error("Manual challan upload error:", err);
     }
+};
+
+window.discardManualChallanFile = function() {
+    const fileInput = document.getElementById("manual-challan-file-input");
+    const camInput = document.getElementById("manual-challan-camera-input");
+    const pathInput = document.getElementById("manual-challan-doc-path");
+    const preview = document.getElementById("manual-challan-file-preview");
+    const discardBtn = document.getElementById("manual-challan-discard-btn");
+
+    if (fileInput) fileInput.value = "";
+    if (camInput) camInput.value = "";
+    if (pathInput) pathInput.value = "";
+    if (preview) preview.style.display = "none";
+    if (discardBtn) discardBtn.style.display = "none";
 };
 
 async function uploadChallanFile(file) {
@@ -316,8 +351,11 @@ async function uploadChallanFile(file) {
         const res = await fetch("/api/receiving/upload-file", { method: "POST", body: formData });
         const data = await res.json();
         document.getElementById("rec-challan-doc-path").value = data.document_path || "";
-        document.getElementById("rec-challan-file-badge").style.display = "block";
+        const badge = document.getElementById("rec-challan-file-badge");
+        if (badge) badge.style.display = "inline-flex";
         document.getElementById("rec-challan-file-name").textContent = `✅ ${file.name} Attached`;
+        const discardBtn = document.getElementById("rec-challan-discard-btn");
+        if (discardBtn) discardBtn.style.display = "inline-flex";
     } catch (err) {
         console.error("Challan file upload error:", err);
     }
@@ -429,6 +467,10 @@ async function processDocumentFile(file, autoSubmitQC = false) {
 
         document.getElementById("rec-document-path").value = data.document_path || "";
         pendingOCRPath = data.document_path || "";
+        const recDiscardBtn = document.getElementById("rec-discard-doc-btn");
+        if (recDiscardBtn && data.document_path) {
+            recDiscardBtn.style.display = "inline-flex";
+        }
 
         renderDynamicFields(fields);
 
@@ -599,6 +641,44 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.disabled = false;
         });
     }
+
+    window.handleOCRFileInputChange = function(input) {
+        const discardBtn = document.getElementById("ocr-file-discard-btn");
+        const badge = document.getElementById("ocr-file-badge");
+        const nameSpan = document.getElementById("ocr-file-name");
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            if (discardBtn) discardBtn.style.display = "inline-flex";
+            if (badge) {
+                badge.style.display = "inline-flex";
+                if (nameSpan) nameSpan.textContent = `📄 ${file.name} selected`;
+            }
+        } else {
+            if (discardBtn) discardBtn.style.display = "none";
+            if (badge) badge.style.display = "none";
+        }
+    };
+
+    window.discardOCRFileInput = function() {
+        const fileInput = document.getElementById("ocr-file-input");
+        const camInput = document.getElementById("ocr-camera-input");
+        const discardBtn = document.getElementById("ocr-file-discard-btn");
+        const badge = document.getElementById("ocr-file-badge");
+
+        if (fileInput) fileInput.value = "";
+        if (camInput) camInput.value = "";
+        if (discardBtn) discardBtn.style.display = "none";
+        if (badge) badge.style.display = "none";
+    };
+
+    window.discardReceivingInvoiceDoc = function() {
+        const recDocPath = document.getElementById("rec-document-path");
+        if (recDocPath) recDocPath.value = "";
+        pendingOCRPath = "";
+        const recDiscardBtn = document.getElementById("rec-discard-doc-btn");
+        if (recDiscardBtn) recDiscardBtn.style.display = "none";
+        window.showAlertModal({ icon: "🗑️", title: "Document Discarded", message: "The invoice document attachment has been removed from this record." });
+    };
 
     // Save Receiving Form Listener
     const recSaveForm = document.getElementById("receiving-save-form");
@@ -1367,6 +1447,30 @@ window.handleManualCameraCapture = async function(input) {
     await uploadManualFile(file);
 };
 
+window.handleManualFileInputChange = function(input) {
+    const discardBtn = document.getElementById("manual-file-discard-btn");
+    if (input.files && input.files[0]) {
+        if (discardBtn) discardBtn.style.display = "inline-flex";
+    } else {
+        if (discardBtn) discardBtn.style.display = "none";
+    }
+};
+
+window.discardManualInvoiceFile = function() {
+    const fileInput = document.getElementById("manual-file-input");
+    const camInput = document.getElementById("manual-camera-input");
+    const pathInput = document.getElementById("manual-document-path");
+    const preview = document.getElementById("manual-file-preview");
+    const discardBtn = document.getElementById("manual-file-discard-btn");
+
+    if (fileInput) fileInput.value = "";
+    if (camInput) camInput.value = "";
+    if (pathInput) pathInput.value = "";
+    manualUploadedFilePath = "";
+    if (preview) preview.style.display = "none";
+    if (discardBtn) discardBtn.style.display = "none";
+};
+
 // Listen on manual file input change
 document.addEventListener("DOMContentLoaded", function() {
     const manualFileInput = document.getElementById("manual-file-input");
@@ -1382,12 +1486,15 @@ document.addEventListener("DOMContentLoaded", function() {
 async function uploadManualFile(file) {
     const formData = new FormData();
     formData.append("file", file);
+    const discardBtn = document.getElementById("manual-file-discard-btn");
+    if (discardBtn) discardBtn.style.display = "inline-flex";
     try {
         const res = await fetch("/api/receiving/upload-file", { method: "POST", body: formData });
         const data = await res.json();
         manualUploadedFilePath = data.document_path || "";
         document.getElementById("manual-document-path").value = manualUploadedFilePath;
-        document.getElementById("manual-file-preview").style.display = "block";
+        const preview = document.getElementById("manual-file-preview");
+        if (preview) preview.style.display = "inline-flex";
         document.getElementById("manual-file-name").textContent = `✅ ${file.name} uploaded`;
     } catch (err) {
         console.error("Manual file upload error:", err);
@@ -1508,12 +1615,48 @@ window.handleChallanOCR = async function(input, target) {
             if (fields["Invoice Date"]) document.getElementById("ch1-challan-date").value = fields["Invoice Date"];
             if (fields["Vendor Name"]) document.getElementById("ch1-vendor-name").value = fields["Vendor Name"];
             if (fields["PO Number"]) document.getElementById("ch1-po-number").value = fields["PO Number"];
-            document.getElementById("ch1-file-badge").style.display = "block";
+            const badge = document.getElementById("ch1-file-badge");
+            if (badge) badge.style.display = "inline-flex";
             document.getElementById("ch1-file-name").textContent = `✅ ${file.name} scanned & attached`;
+            const discardBtn = document.getElementById("ch1-discard-btn");
+            if (discardBtn) discardBtn.style.display = "inline-flex";
         }
     } catch (err) {
         console.error("Challan OCR error:", err);
     }
+};
+
+window.handleSection1FileChange = function(input) {
+    const discardBtn = document.getElementById("ch1-discard-btn");
+    const badge = document.getElementById("ch1-file-badge");
+    const nameSpan = document.getElementById("ch1-file-name");
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (discardBtn) discardBtn.style.display = "inline-flex";
+        if (badge) {
+            badge.style.display = "inline-flex";
+            if (nameSpan) nameSpan.textContent = `📎 ${file.name}`;
+        }
+    } else {
+        if (discardBtn) discardBtn.style.display = "none";
+        if (badge) badge.style.display = "none";
+    }
+};
+
+window.discardSection1File = function() {
+    const fileInput = document.getElementById("ch1-file-input");
+    const camInput = document.getElementById("ch1-camera-input");
+    const ocrInput = document.getElementById("challan-ocr-input");
+    const pathInput = document.getElementById("ch1-document-path");
+    const badge = document.getElementById("ch1-file-badge");
+    const discardBtn = document.getElementById("ch1-discard-btn");
+
+    if (fileInput) fileInput.value = "";
+    if (camInput) camInput.value = "";
+    if (ocrInput) ocrInput.value = "";
+    if (pathInput) pathInput.value = "";
+    if (badge) badge.style.display = "none";
+    if (discardBtn) discardBtn.style.display = "none";
 };
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -1569,6 +1712,8 @@ document.addEventListener("DOMContentLoaded", function() {
                     window.showAlertModal({ icon: "✅", title: "Challan Logged", message: `Delivery Challan #${challanNumber} has been logged.` });
                     ch1Form.reset();
                     document.getElementById("ch1-file-badge").style.display = "none";
+                    const discardBtn = document.getElementById("ch1-discard-btn");
+                    if (discardBtn) discardBtn.style.display = "none";
                     if (typeof fetchDeliveryChallans === 'function') fetchDeliveryChallans();
                 } else {
                     window.showAlertModal({ icon: "❌", title: "Save Failed", message: "Could not log delivery challan." });
@@ -1660,9 +1805,11 @@ window.handleSection3InvoiceUpload = async function(input) {
             const el = document.getElementById("s3m-document-path");
             if (el) el.value = data.document_path;
             const badge = document.getElementById("s3m-file-badge");
-            if (badge) badge.style.display = "block";
+            if (badge) badge.style.display = "inline-flex";
             const nameEl = document.getElementById("s3m-file-name");
             if (nameEl) nameEl.textContent = `✅ ${file.name} (OCR Scanned)`;
+            const discardBtn = document.getElementById("s3m-discard-btn");
+            if (discardBtn) discardBtn.style.display = "inline-flex";
         }
         window.showAlertModal({ icon: "🎉", title: "Invoice OCR Complete", message: "Extracted invoice fields have been populated into Section 3." });
     } catch (err) {
@@ -1768,6 +1915,12 @@ window.saveSection3ManualInvoice = async function() {
             if (customContainer) customContainer.innerHTML = "";
             const badge = document.getElementById("s3m-file-badge");
             if (badge) badge.style.display = "none";
+            const discardBtn = document.getElementById("s3m-discard-btn");
+            if (discardBtn) discardBtn.style.display = "none";
+            const fileInput = document.getElementById("s3m-file-input");
+            if (fileInput) fileInput.value = "";
+            const camInput = document.getElementById("s3m-camera-input");
+            if (camInput) camInput.value = "";
             const docPathEl = document.getElementById("s3m-document-path");
             if (docPathEl) docPathEl.value = "";
 
@@ -1827,8 +1980,11 @@ window.handleSection1CameraUpload = async function(input) {
         const res = await fetch("/api/receiving/upload-file", { method: "POST", body: formData });
         const data = await res.json();
         document.getElementById("ch1-document-path").value = data.document_path || "";
-        document.getElementById("ch1-file-badge").style.display = "block";
+        const badge = document.getElementById("ch1-file-badge");
+        if (badge) badge.style.display = "inline-flex";
         document.getElementById("ch1-file-name").textContent = `✅ ${file.name} attached`;
+        const discardBtn = document.getElementById("ch1-discard-btn");
+        if (discardBtn) discardBtn.style.display = "inline-flex";
     } catch (err) {
         console.error("Section 1 camera upload error:", err);
     }
@@ -1854,6 +2010,39 @@ window.addSection3CustomField = function() {
     container.appendChild(row);
 };
 
+window.handleSection3FileInputChange = function(input) {
+    const discardBtn = document.getElementById("s3m-discard-btn");
+    const badge = document.getElementById("s3m-file-badge");
+    const nameEl = document.getElementById("s3m-file-name");
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (discardBtn) discardBtn.style.display = "inline-flex";
+        if (badge) {
+            badge.style.display = "inline-flex";
+            if (nameEl) nameEl.textContent = `📎 ${file.name}`;
+        }
+    } else {
+        if (discardBtn) discardBtn.style.display = "none";
+        if (badge) badge.style.display = "none";
+    }
+};
+
+window.discardSection3File = function() {
+    const fileInput = document.getElementById("s3m-file-input");
+    const camInput = document.getElementById("s3m-camera-input");
+    const ocrInput = document.getElementById("s3-invoice-file");
+    const pathInput = document.getElementById("s3m-document-path");
+    const badge = document.getElementById("s3m-file-badge");
+    const discardBtn = document.getElementById("s3m-discard-btn");
+
+    if (fileInput) fileInput.value = "";
+    if (camInput) camInput.value = "";
+    if (ocrInput) ocrInput.value = "";
+    if (pathInput) pathInput.value = "";
+    if (badge) badge.style.display = "none";
+    if (discardBtn) discardBtn.style.display = "none";
+};
+
 window.handleSection3CameraUpload = async function(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
@@ -1863,10 +2052,62 @@ window.handleSection3CameraUpload = async function(input) {
         const res = await fetch("/api/receiving/upload-file", { method: "POST", body: formData });
         const data = await res.json();
         document.getElementById("s3m-document-path").value = data.document_path || "";
-        document.getElementById("s3m-file-badge").style.display = "block";
+        const badge = document.getElementById("s3m-file-badge");
+        if (badge) badge.style.display = "inline-flex";
         document.getElementById("s3m-file-name").textContent = `✅ ${file.name} attached`;
+        const discardBtn = document.getElementById("s3m-discard-btn");
+        if (discardBtn) discardBtn.style.display = "inline-flex";
     } catch (err) {
         console.error("Section 3 camera upload error:", err);
+    }
+};
+
+// ----------------------------------------------------
+// GLOBAL / GENERIC FILE DISCARD HELPERS
+// ----------------------------------------------------
+
+window.handleDispatchFileInputChange = function(input, discardBtnId, badgeId, fileNameId) {
+    const btn = document.getElementById(discardBtnId);
+    const badge = document.getElementById(badgeId);
+    const nameEl = document.getElementById(fileNameId);
+    if (input.files && input.files[0]) {
+        if (btn) btn.style.display = "inline-flex";
+        if (badge) {
+            badge.style.display = "inline-flex";
+            if (nameEl) nameEl.textContent = `📎 ${input.files[0].name}`;
+        }
+    } else {
+        if (btn) btn.style.display = "none";
+        if (badge) badge.style.display = "none";
+    }
+};
+
+window.discardDispatchFile = function(inputId, discardBtnId, badgeId) {
+    const input = document.getElementById(inputId);
+    if (input) input.value = "";
+    const btn = document.getElementById(discardBtnId);
+    if (btn) btn.style.display = "none";
+    const badge = document.getElementById(badgeId);
+    if (badge) badge.style.display = "none";
+};
+
+window.handleGenericFileInputChange = function(input, discardBtnId) {
+    const btn = typeof discardBtnId === 'string' ? document.getElementById(discardBtnId) : discardBtnId;
+    if (btn) {
+        if (input.files && input.files[0]) {
+            btn.style.display = "inline-flex";
+        } else {
+            btn.style.display = "none";
+        }
+    }
+};
+
+window.clearSpecificFileInput = function(input, discardBtn) {
+    if (input) {
+        input.value = "";
+    }
+    if (discardBtn) {
+        discardBtn.style.display = "none";
     }
 };
 

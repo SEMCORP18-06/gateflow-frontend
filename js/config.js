@@ -58,4 +58,25 @@
         }
         return originalFetch.call(this, resource, init);
     };
+
+    // Global file input helpers
+    window.handleGenericFileInputChange = function(input, discardBtnId) {
+        const btn = typeof discardBtnId === 'string' ? document.getElementById(discardBtnId) : discardBtnId;
+        if (btn) {
+            if (input.files && input.files[0]) {
+                btn.style.display = "inline-flex";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+    };
+
+    window.clearSpecificFileInput = function(input, discardBtn) {
+        if (input) {
+            input.value = "";
+        }
+        if (discardBtn) {
+            discardBtn.style.display = "none";
+        }
+    };
 })();

@@ -91,6 +91,12 @@ let poLineItems = [
     { line_no: 2, goods_description: "Stainless Steel Flange 4 Inch", project_no: "PRJ-SEM-2026-101", hsn_sac: "7307", qty: 10, uom: "Nos", base_rate: 1200, gst_percent: 18, amount: 12000 },
     { line_no: 3, goods_description: "Digital Vacuum Gauge Controller", project_no: "PRJ-SEM-2026-101", hsn_sac: "9026", qty: 1, uom: "Nos", base_rate: 15000, gst_percent: 18, amount: 15000 }
 ];
+window.poLineItems = poLineItems;
+window.setPOLineItems = function(items) {
+    poLineItems = items;
+    window.poLineItems = poLineItems;
+    return poLineItems;
+};
 
 // Fetch active project numbers & PO autofill packages from semcorpemp portal
 window.fetchPortalProjects = async function() {
@@ -258,24 +264,31 @@ window.switchPOSubTab = function(subKey) {
 };
 
 // Render Line Items in SEMCO PO Builder Form
-window.renderPOLineItemsTable = function() {
+function renderPOLineItemsTable() {
     const tbody = document.getElementById('semco-po-items-tbody');
     if (!tbody) return;
     tbody.innerHTML = '';
 
     poLineItems.forEach((item, index) => {
         item.line_no = index + 1;
-        item.amount = (parseFloat(item.qty) || 0) * (parseFloat(item.base_rate) || 0);
+        const qVal = (item.qty !== undefined && item.qty !== null && item.qty !== '') ? item.qty : '';
+        const rVal = (item.base_rate !== undefined && item.base_rate !== null && item.base_rate !== '') ? item.base_rate : '';
+        const gstVal = (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18;
+        item.gst_percent = gstVal;
+
+        const numQty = (qVal !== '' && !isNaN(qVal)) ? parseFloat(qVal) : 0;
+        const numRate = (rVal !== '' && !isNaN(rVal)) ? parseFloat(rVal) : 0;
+        item.amount = numQty * numRate;
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td style="text-align: center; font-weight: 700; color: #1E3A8A;">${item.line_no}</td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.goods_description || ''}" onchange="updatePOLineItem(${index}, 'goods_description', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.project_no || ''}" onchange="updatePOLineItem(${index}, 'project_no', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.hsn_sac || ''}" onchange="updatePOLineItem(${index}, 'hsn_sac', this.value)"></td>
-            <td><input type="number" class="form-control form-control-sm" value="${item.qty || 0}" style="text-align: center;" oninput="updatePOLineItem(${index}, 'qty', this.value)"></td>
+            <td><input type="text" class="form-control form-control-sm" value="${item.goods_description || ''}" placeholder="Description of goods" onchange="updatePOLineItem(${index}, 'goods_description', this.value)"></td>
+            <td><input type="text" class="form-control form-control-sm" value="${item.project_no || ''}" placeholder="Project No" onchange="updatePOLineItem(${index}, 'project_no', this.value)"></td>
+            <td><input type="text" class="form-control form-control-sm" value="${item.hsn_sac || ''}" placeholder="HSN" onchange="updatePOLineItem(${index}, 'hsn_sac', this.value)"></td>
+            <td><input type="number" min="1" step="any" class="form-control form-control-sm po-qty-input" value="${qVal}" placeholder="1" onfocus="this.select()" oninput="updatePOLineItem(${index}, 'qty', this.value)"></td>
             <td>
-                <select class="form-control form-control-sm" onchange="updatePOLineItem(${index}, 'uom', this.value)">
+                <select class="form-control form-control-sm po-uom-select" onchange="updatePOLineItem(${index}, 'uom', this.value)">
                     <option value="Nos" ${item.uom === 'Nos' ? 'selected' : ''}>Nos</option>
                     <option value="Kg" ${item.uom === 'Kg' ? 'selected' : ''}>Kg</option>
                     <option value="Mtr" ${item.uom === 'Mtr' ? 'selected' : ''}>Mtr</option>
@@ -284,9 +297,9 @@ window.renderPOLineItemsTable = function() {
                     <option value="Lot" ${item.uom === 'Lot' ? 'selected' : ''}>Lot</option>
                 </select>
             </td>
-            <td><input type="number" step="0.01" class="form-control form-control-sm" value="${item.base_rate || 0}" style="text-align: right;" oninput="updatePOLineItem(${index}, 'base_rate', this.value)"></td>
+            <td><input type="number" step="any" min="0" class="form-control form-control-sm po-rate-input" value="${rVal}" placeholder="0.00" onfocus="this.select()" onkeydown="if(event.key==='Escape'){this.value='';updatePOLineItem(${index},'base_rate','');}" oninput="updatePOLineItem(${index}, 'base_rate', this.value)"></td>
             <td>
-                <select class="form-control form-control-sm" onchange="updatePOLineItem(${index}, 'gst_percent', this.value)">
+                <select class="form-control form-control-sm po-gst-select" onchange="updatePOLineItem(${index}, 'gst_percent', this.value)">
                     <option value="18" ${item.gst_percent == 18 ? 'selected' : ''}>18%</option>
                     <option value="12" ${item.gst_percent == 12 ? 'selected' : ''}>12%</option>
                     <option value="5" ${item.gst_percent == 5 ? 'selected' : ''}>5%</option>
@@ -296,58 +309,82 @@ window.renderPOLineItemsTable = function() {
             </td>
             <td style="text-align: right; font-weight: 700; color: #1E3A8A;">₹ ${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
             <td style="text-align: center;">
-                <button type="button" class="btn btn-outline btn-sm" style="border:none; color:#EF4444; padding:2px 6px;" onclick="deletePOLineItemRow(${index})">🗑️</button>
+                <button type="button" class="btn btn-outline btn-sm" style="border:none; color:#EF4444; padding:2px 6px; font-size: 1rem;" title="Delete row" onclick="deletePOLineItemRow(${index})">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 
     recalculateSEMCOTotals();
-};
+}
+window.renderPOLineItemsTable = renderPOLineItemsTable;
 
-window.addPOLineItemRow = function() {
+function addPOLineItemRow() {
+    const defaultProj = document.getElementById('semco-po-project-select')?.value || "PRJ-992";
     poLineItems.push({
         line_no: poLineItems.length + 1,
         goods_description: "",
-        project_no: "PRJ-992",
+        project_no: defaultProj,
         hsn_sac: "8414",
         qty: 1,
         uom: "Nos",
-        base_rate: 0,
+        base_rate: "",
         gst_percent: 18,
         amount: 0
     });
+    window.poLineItems = poLineItems;
     renderPOLineItemsTable();
-};
+}
+window.addPOLineItemRow = addPOLineItemRow;
 
-window.deletePOLineItemRow = function(index) {
+function deletePOLineItemRow(index) {
     if (poLineItems.length <= 1) {
-        window.showAlertModal({ icon: "⚠️", title: "Action Restricted", message: "A Purchase Order must contain at least 1 line item." });
+        if (window.showAlertModal) {
+            window.showAlertModal({ icon: "⚠️", title: "Action Restricted", message: "A Purchase Order must contain at least 1 line item." });
+        }
         return;
     }
     poLineItems.splice(index, 1);
+    window.poLineItems = poLineItems;
     renderPOLineItemsTable();
-};
+}
+window.deletePOLineItemRow = deletePOLineItemRow;
 
-window.updatePOLineItem = function(index, field, val) {
-    if (field === 'qty' || field === 'base_rate' || field === 'gst_percent') {
-        poLineItems[index][field] = parseFloat(val) || 0;
+function updatePOLineItem(index, field, val) {
+    if (!poLineItems[index]) return;
+    if (field === 'qty' || field === 'base_rate') {
+        poLineItems[index][field] = (val === '' || val === null || val === undefined) ? '' : (parseFloat(val) || 0);
+    } else if (field === 'gst_percent') {
+        poLineItems[index][field] = (val === '' || val === null || val === undefined) ? 18 : Number(val);
     } else {
         poLineItems[index][field] = val;
     }
-    renderPOLineItemsTable();
-};
+
+    const qty = (poLineItems[index].qty !== '' && !isNaN(poLineItems[index].qty)) ? parseFloat(poLineItems[index].qty) : 0;
+    const rate = (poLineItems[index].base_rate !== '' && !isNaN(poLineItems[index].base_rate)) ? parseFloat(poLineItems[index].base_rate) : 0;
+    poLineItems[index].amount = qty * rate;
+
+    const rows = document.querySelectorAll('#semco-po-items-tbody tr');
+    if (rows && rows[index]) {
+        const amountCell = rows[index].children[8];
+        if (amountCell) {
+            amountCell.textContent = `₹ ${poLineItems[index].amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+        }
+    }
+    recalculateSEMCOTotals();
+}
+window.updatePOLineItem = updatePOLineItem;
 
 // Recalculate Subtotal, Freight, P&F, Taxes, Grand Total & Rupees in Words
-window.recalculateSEMCOTotals = function() {
+function recalculateSEMCOTotals() {
     let totalQty = 0;
     let subTotal = 0;
     let totalTaxAmount = 0;
 
     poLineItems.forEach(item => {
-        const qty = parseFloat(item.qty) || 0;
-        const rate = parseFloat(item.base_rate) || 0;
-        const gst = parseFloat(item.gst_percent) || 18;
+        const qty = (item.qty !== '' && item.qty !== undefined && item.qty !== null && !isNaN(item.qty)) ? parseFloat(item.qty) : 0;
+        const rate = (item.base_rate !== '' && item.base_rate !== undefined && item.base_rate !== null && !isNaN(item.base_rate)) ? parseFloat(item.base_rate) : 0;
+        const gst = (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18;
 
         const lineAmount = qty * rate;
         totalQty += qty;
@@ -358,10 +395,21 @@ window.recalculateSEMCOTotals = function() {
     const freight = parseFloat(document.getElementById('semco-input-freight')?.value) || 0;
     const pfCharges = parseFloat(document.getElementById('semco-input-pf')?.value) || 0;
 
-    // Tax calculation on (subTotal + freight + pfCharges)
-    const taxableBase = subTotal + freight + pfCharges;
-    const igstAmount = (taxableBase * 0.18); // Default 18% IGST
-    const grandTotal = taxableBase + igstAmount;
+    // Incidental charges (Freight & P&F) GST calculation:
+    // Determine effective GST rate based on items' selected percentages
+    const activeGstRates = poLineItems.map(item => (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18);
+    const uniqueRates = [...new Set(activeGstRates)];
+
+    let effectiveGstRate = 0.18;
+    if (subTotal > 0) {
+        effectiveGstRate = totalTaxAmount / subTotal;
+    } else if (uniqueRates.length === 1) {
+        effectiveGstRate = uniqueRates[0] / 100;
+    }
+
+    const incidentalTax = (freight + pfCharges) * effectiveGstRate;
+    const finalGstAmount = totalTaxAmount + incidentalTax;
+    const grandTotal = subTotal + freight + pfCharges + finalGstAmount;
 
     // Update DOM Display
     const qtyEl = document.getElementById('semco-calc-total-qty');
@@ -370,15 +418,27 @@ window.recalculateSEMCOTotals = function() {
     const subEl = document.getElementById('semco-calc-subtotal');
     if (subEl) subEl.textContent = `₹ ${subTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
+    const taxLabelEl = document.getElementById('semco-tax-label');
+    if (taxLabelEl) {
+        if (uniqueRates.length === 1) {
+            taxLabelEl.textContent = `IGST ${uniqueRates[0]}% :`;
+        } else if (uniqueRates.length > 1) {
+            taxLabelEl.textContent = `Total GST :`;
+        } else {
+            taxLabelEl.textContent = `GST :`;
+        }
+    }
+
     const taxEl = document.getElementById('semco-calc-tax');
-    if (taxEl) taxEl.textContent = `₹ ${igstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    if (taxEl) taxEl.textContent = `₹ ${finalGstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const grandEl = document.getElementById('semco-calc-grandtotal');
     if (grandEl) grandEl.textContent = `₹ ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const wordsDisplay = document.getElementById('semco-amount-words-display');
     if (wordsDisplay) wordsDisplay.textContent = convertNumberToIndianWords(Math.round(grandTotal));
-};
+}
+window.recalculateSEMCOTotals = recalculateSEMCOTotals;
 
 // Convert Number to Indian Rupees Text (e.g. 140060 -> Indian Rupees One Lakh Forty Thousand Sixty Only)
 function convertNumberToIndianWords(num) {
@@ -421,14 +481,32 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
     }
 
     let subTotal = 0;
+    let totalTaxAmount = 0;
     poLineItems.forEach(item => {
-        subTotal += (parseFloat(item.qty) || 0) * (parseFloat(item.base_rate) || 0);
+        const q = (item.qty !== '' && item.qty !== undefined && item.qty !== null && !isNaN(item.qty)) ? parseFloat(item.qty) : 0;
+        const r = (item.base_rate !== '' && item.base_rate !== undefined && item.base_rate !== null && !isNaN(item.base_rate)) ? parseFloat(item.base_rate) : 0;
+        const g = (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18;
+        const lineAmt = q * r;
+        subTotal += lineAmt;
+        totalTaxAmount += (lineAmt * g / 100);
     });
 
     const freight = parseFloat(document.getElementById('semco-input-freight')?.value) || 0;
     const pfCharges = parseFloat(document.getElementById('semco-input-pf')?.value) || 0;
-    const igstAmount = (subTotal + freight + pfCharges) * 0.18;
-    const grandTotal = subTotal + freight + pfCharges + igstAmount;
+
+    const activeGstRates = poLineItems.map(item => (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18);
+    const uniqueRates = [...new Set(activeGstRates)];
+
+    let effectiveGstRate = 0.18;
+    if (subTotal > 0) {
+        effectiveGstRate = totalTaxAmount / subTotal;
+    } else if (uniqueRates.length === 1) {
+        effectiveGstRate = uniqueRates[0] / 100;
+    }
+
+    const incidentalTax = (freight + pfCharges) * effectiveGstRate;
+    const finalGstAmount = totalTaxAmount + incidentalTax;
+    const grandTotal = subTotal + freight + pfCharges + finalGstAmount;
 
     const payload = {
         po_number: poNo,
@@ -445,11 +523,12 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
         ship_address: document.getElementById('semco-ship-address')?.value || "",
         ship_gstin: document.getElementById('semco-ship-gst')?.value || "27ABRCS0246H1Z3",
         line_items: poLineItems,
-        total_qty: poLineItems.reduce((acc, curr) => acc + (parseFloat(curr.qty) || 0), 0),
+        total_qty: poLineItems.reduce((acc, curr) => acc + ((curr.qty !== '' && !isNaN(curr.qty)) ? parseFloat(curr.qty) : 0), 0),
         sub_total: subTotal,
         freight: freight,
         pf_charges: pfCharges,
-        igst_amount: igstAmount,
+        igst_rate: uniqueRates.length === 1 ? uniqueRates[0] : (effectiveGstRate * 100),
+        igst_amount: finalGstAmount,
         grand_total: grandTotal,
         amount_in_words: convertNumberToIndianWords(Math.round(grandTotal)),
         payment_terms: document.getElementById('semco-term-payment')?.value || "30 Days after Delivery",
@@ -486,11 +565,15 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
                 bodyMsg = `Draft Purchase Order #${saved.po_number} saved.`;
             }
 
-            window.showAlertModal({ icon: "✅", title: titleMsg, message: bodyMsg });
-            fetchPurchaseOrders();
-            switchPOSubTab('repo');
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "✅", title: titleMsg, message: bodyMsg });
+            }
+            if (typeof fetchPurchaseOrders === 'function') fetchPurchaseOrders();
+            if (typeof switchPOSubTab === 'function') switchPOSubTab('repo');
         } else {
-            window.showAlertModal({ icon: "❌", title: "Save Error", message: "Failed to save Purchase Order." });
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "❌", title: "Save Error", message: "Failed to save Purchase Order." });
+            }
         }
     } catch (err) {
         console.error("PO Save error:", err);
@@ -632,20 +715,29 @@ window.openSEMCOPOPrintView = function(poId) {
     let itemsRows = "";
     const items = po.line_items || poLineItems;
     items.forEach(item => {
+        const itemGst = (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? item.gst_percent : 18;
+        const qVal = (item.qty !== undefined && item.qty !== null && item.qty !== '') ? item.qty : 0;
+        const rVal = (item.base_rate !== undefined && item.base_rate !== null && item.base_rate !== '') ? item.base_rate : 0;
+        const lineAmt = item.amount !== undefined ? item.amount : ((parseFloat(qVal) || 0) * (parseFloat(rVal) || 0));
+
         itemsRows += `
             <tr>
                 <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.line_no}</td>
                 <td style="padding:6px; border:1px solid #CBD5E1;">${item.goods_description}</td>
                 <td style="padding:6px; border:1px solid #CBD5E1;">${item.project_no || ''}</td>
                 <td style="padding:6px; border:1px solid #CBD5E1;">${item.hsn_sac || ''}</td>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.qty}</td>
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${qVal}</td>
                 <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.uom || 'Nos'}</td>
-                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1;">₹ ${(item.base_rate || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.gst_percent || 18}%</td>
-                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1; font-weight:700;">₹ ${(item.amount || (item.qty * item.base_rate) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1;">₹ ${(parseFloat(rVal) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${itemGst}%</td>
+                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1; font-weight:700;">₹ ${(parseFloat(lineAmt) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
             </tr>
         `;
     });
+
+    const itemGstRates = items.map(it => (it.gst_percent !== undefined && it.gst_percent !== null && it.gst_percent !== '') ? Number(it.gst_percent) : 18);
+    const uniqueItemRates = [...new Set(itemGstRates)];
+    const modalTaxLabel = uniqueItemRates.length === 1 ? `IGST ${uniqueItemRates[0]}%` : (uniqueItemRates.length > 1 ? 'Total GST' : 'GST');
 
     const printHtml = `
         <div id="semco-printable-po-doc" style="background: white; border: 2px solid #0F172A; padding: 20px; font-family: Arial, sans-serif; text-align: left; box-sizing: border-box; overflow-x: hidden;">
@@ -720,7 +812,7 @@ window.openSEMCOPOPrintView = function(poId) {
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Subtotal:</span><strong>₹ ${(po.sub_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong></div>
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Freight:</span><span>₹ ${(po.freight || 1500).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>P&F:</span><span>₹ ${(po.pf_charges || 500).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
-                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>IGST 18%:</span><span>₹ ${(po.igst_amount || 21060).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>${modalTaxLabel}:</span><span>₹ ${(po.igst_amount !== undefined ? po.igst_amount : 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:6px 8px; background:#1E3A8A; color:white;"><strong>Grand Total:</strong><strong>₹ ${(po.grand_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong></div>
                 </div>
             </div>

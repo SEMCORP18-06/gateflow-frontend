@@ -590,6 +590,89 @@ tr:hover {
     background: #F8FAFD;
 }
 
+/* Enhanced SEMCO PO Builder Line Items Table */
+#semco-po-items-table {
+    width: 100%;
+    min-width: 1020px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.88rem;
+}
+
+#semco-po-items-table th {
+    padding: 10px 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+#semco-po-items-table td {
+    padding: 8px 8px;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+#semco-po-items-table .form-control {
+    height: 42px;
+    min-height: 42px;
+    padding: 6px 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1.5px solid #CBD5E1;
+    background-color: #FFFFFF;
+    color: #0F172A;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#semco-po-items-table .form-control:focus {
+    border-color: #2563EB;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    background-color: #FFFFFF;
+}
+
+#semco-po-items-table select.form-control {
+    padding: 6px 28px 6px 10px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231E3A8A' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px 14px;
+    background-color: #FFFFFF;
+}
+
+.po-qty-input {
+    min-width: 90px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+}
+
+.po-uom-select {
+    min-width: 105px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+}
+
+.po-rate-input {
+    min-width: 125px !important;
+    font-weight: 700 !important;
+    text-align: right !important;
+}
+
+.po-gst-select {
+    min-width: 110px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    color: #1E3A8A !important;
+}
+
 /* Wizard Steps for Tri-Party Dispatch */
 .wizard-steps {
     display: flex;

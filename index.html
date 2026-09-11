@@ -374,9 +374,11 @@
                 <div class="card">
                     <div class="card-title">
                         <span>📜 Delivery Challans Repository</span>
-                        <div>
-                            <span class="badge badge-pending" id="challan-pending-invoice-count" style="margin-right: 6px;">0 Awaiting Invoice</span>
-                            <button class="btn btn-outline btn-sm" onclick="exportData('challans', 'csv')">Export CSV</button>
+                        <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                            <span class="badge badge-pending" id="challan-pending-invoice-count" style="margin-right: 4px;">0 Awaiting Invoice</span>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="exportData('challans', 'csv')">Export CSV</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="exportData('challans', 'xlsx')">Export Excel</button>
+                            <button type="button" class="btn btn-outline btn-sm" onclick="exportData('challans', 'pdf')">Export PDF</button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -1304,9 +1306,16 @@
 
             <!-- QC Approved Dispatches Awaiting Final Clearance Card -->
             <div class="card" style="margin-top: 24px;" id="card-approved-dispatches">
-                <div class="card-title">
-                    <span>🚀 QC Approved Dispatches (Awaiting Final Clearance)</span>
-                    <span class="badge badge-verified">Ready for Gate Out</span>
+                <div class="card-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <span>🚀 QC Approved Dispatches (Awaiting Final Clearance)</span>
+                        <span class="badge badge-verified" style="margin-left: 6px;">Ready for Gate Out</span>
+                    </div>
+                    <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportData('dispatch', 'csv')">Export CSV</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportData('dispatch', 'xlsx')">Export Excel</button>
+                        <button type="button" class="btn btn-outline btn-sm" onclick="exportData('dispatch', 'pdf')">Export PDF</button>
+                    </div>
                 </div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
                     Review QC-approved material bundles below and grant final clearance to release the transport vehicle & initiate delivery.
@@ -2514,12 +2523,12 @@
         </div>
     </div>
 
-    <script src="./js/config.js?v=10005"></script>
-    <script src="./js/receiving.js?v=10005"></script>
-    <script src="./js/dispatch.js?v=10005"></script>
-    <script src="./js/exports.js?v=10005"></script>
-    <script src="./js/pos.js?v=10005"></script>
-    <script src="./js/payments.js?v=10005"></script>
-    <script src="./js/app.js?v=10005"></script>
+    <script src="./js/config.js?v=10006"></script>
+    <script src="./js/receiving.js?v=10006"></script>
+    <script src="./js/dispatch.js?v=10006"></script>
+    <script src="./js/exports.js?v=10006"></script>
+    <script src="./js/pos.js?v=10006"></script>
+    <script src="./js/payments.js?v=10006"></script>
+    <script src="./js/app.js?v=10006"></script>
 </body>
 </html>

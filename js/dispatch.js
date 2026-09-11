@@ -6,6 +6,47 @@ let currentDispatches = [];
 function buildQCApprovedDocsHtml(d, compact = false) {
     let html = "";
 
+    // Direct Uploaded Dispatch Documents (Invoice, Challan, Packing List, Photos)
+    const directDocs = [];
+    if (d.supplier_invoice_doc) {
+        const invUrl = window.formatFileUrl ? window.formatFileUrl(d.supplier_invoice_doc) : d.supplier_invoice_doc;
+        directDocs.push(`
+            <a href="${invUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #2563EB; color: #2563EB; font-size: ${compact ? '0.72rem' : '0.8rem'}; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                📄 Invoice
+            </a>
+        `);
+    }
+    if (d.supplier_challan_doc) {
+        const chUrl = window.formatFileUrl ? window.formatFileUrl(d.supplier_challan_doc) : d.supplier_challan_doc;
+        directDocs.push(`
+            <a href="${chUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #D97706; color: #D97706; font-size: ${compact ? '0.72rem' : '0.8rem'}; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                📜 Challan
+            </a>
+        `);
+    }
+    if (d.supplier_packing_list_doc) {
+        const plUrl = window.formatFileUrl ? window.formatFileUrl(d.supplier_packing_list_doc) : d.supplier_packing_list_doc;
+        directDocs.push(`
+            <a href="${plUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #059669; color: #059669; font-size: ${compact ? '0.72rem' : '0.8rem'}; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                📦 Packing List
+            </a>
+        `);
+    }
+    if (d.material_pictures && Array.isArray(d.material_pictures) && d.material_pictures.length > 0) {
+        d.material_pictures.forEach((pic, idx) => {
+            const picUrl = window.formatFileUrl ? window.formatFileUrl(pic) : pic;
+            directDocs.push(`
+                <a href="${picUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #7C3AED; color: #7C3AED; font-size: ${compact ? '0.72rem' : '0.8rem'}; padding: 2px 7px; display: inline-flex; align-items: center; gap: 4px; font-weight: 600;">
+                    🖼️ Photo ${idx + 1}
+                </a>
+            `);
+        });
+    }
+
+    if (directDocs.length > 0) {
+        html += `<div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 6px;">${directDocs.join('')}</div>`;
+    }
+
     // QC Approved docs from Project Engineer packages
     if (d.qc_approved_docs && d.qc_approved_docs.length > 0) {
         const docs = d.qc_approved_docs.map(pkg => {
@@ -108,6 +149,7 @@ function renderDispatchTable(records) {
             </td>
             <td>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    <button class="btn btn-outline btn-sm" onclick="previewDispatchBundle('${d.id}')" title="Preview All Uploaded Documents">👁️ View Bundle</button>
                     ${colStatus !== 'Collected' ? `<button class="btn btn-success btn-sm" onclick="markDispatchCollected('${d.id}')">💰 Mark Collected</button>` : ''}
                     ${d.status === 'Draft' ? `<button class="btn btn-outline btn-sm" onclick="submitDispatchQC('${d.id}')">Submit QC</button>` : ''}
                     ${d.status === 'OK for Dispatch' ? `<button class="btn btn-primary btn-sm" onclick="completeDispatch('${d.id}')">Mark Completed</button>` : ''}
@@ -516,3 +558,197 @@ window.initiateFinalDispatch = async function(dispatchId) {
         });
     }
 };
+
+function renderDispatchDocViewer(docPath, label) {
+    if (!docPath) {
+        return `
+            <div style="background: #F8FAFC; border: 2px dashed #CBD5E1; border-radius: 12px; height: 420px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 20px;">
+                <span style="font-size: 2.5rem; margin-bottom: 8px;">📭</span>
+                <strong>No Document Attached</strong>
+                <p style="font-size: 0.85rem; margin: 4px 0 0 0;">No file was uploaded for this record.</p>
+            </div>
+        `;
+    }
+
+    const fileUrl = window.formatFileUrl ? window.formatFileUrl(docPath) : docPath;
+    const isImage = /\.(jpe?g|png|webp|gif|bmp)(\?.*)?$/i.test(docPath);
+
+    return `
+        <div style="border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #000000; box-shadow: var(--shadow-sm);">
+            <div style="background: #1E293B; color: #FFFFFF; padding: 8px 14px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                    ${isImage ? '🖼️' : '📄'} <strong>${label || 'Attached Document'}</strong>
+                </span>
+                <div style="display: flex; gap: 8px;">
+                    <a href="${fileUrl}" target="_blank" class="btn btn-outline btn-sm" style="color: #FFFFFF; border-color: rgba(255,255,255,0.4); padding: 2px 8px; font-size: 0.75rem;">
+                        ↗️ Open in Tab
+                    </a>
+                    <a href="${fileUrl}" download class="btn btn-primary btn-sm" style="padding: 2px 8px; font-size: 0.75rem;">
+                        ⬇️ Download
+                    </a>
+                </div>
+            </div>
+            <div style="height: 480px; background: #0F172A; display: flex; align-items: center; justify-content: center;">
+                ${isImage ? `
+                    <img src="${fileUrl}" alt="Attached Document" style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                ` : `
+                    <iframe src="${fileUrl}" style="width: 100%; height: 100%; border: none;" title="Attached Document"></iframe>
+                `}
+            </div>
+        </div>
+    `;
+}
+
+window.switchDispatchPreviewDoc = function(docPath, label, btnEl) {
+    const viewer = document.getElementById('disp-active-doc-viewer');
+    if (viewer) {
+        viewer.innerHTML = renderDispatchDocViewer(docPath, label);
+    }
+    if (btnEl && btnEl.parentElement) {
+        btnEl.parentElement.querySelectorAll('button').forEach(b => {
+            b.style.borderColor = 'var(--border-color)';
+            b.style.fontWeight = '500';
+            b.style.background = '#F8FAFC';
+            b.style.color = 'var(--text-main)';
+        });
+        btnEl.style.borderColor = 'var(--semco-blue)';
+        btnEl.style.fontWeight = '700';
+        btnEl.style.background = '#EFF6FF';
+        btnEl.style.color = 'var(--semco-blue)';
+    }
+};
+
+window.previewDispatchBundle = function(dispatchId) {
+    const modal = document.getElementById('dispatch-preview-modal');
+    if (!modal) return;
+
+    const d = currentDispatches.find(item => item.id === dispatchId || item._id === dispatchId);
+    if (!d) {
+        if (window.showAlertModal) {
+            window.showAlertModal({ icon: '❌', title: 'Not Found', message: 'Dispatch record not found.' });
+        } else {
+            alert('Dispatch record not found.');
+        }
+        return;
+    }
+
+    const titleEl = document.getElementById('disp-preview-title');
+    const subtitleEl = document.getElementById('disp-preview-subtitle');
+    const bodyEl = document.getElementById('disp-preview-split-body');
+
+    if (titleEl) titleEl.innerText = `Dispatch Bundle #${d.dispatch_number}`;
+    if (subtitleEl) subtitleEl.innerText = `Client: ${d.client_name || 'N/A'} | Status: ${d.status || 'Active'} | Vehicle: ${d.vehicle_number || 'N/A'}`;
+
+    // Collect all documents
+    const docs = [];
+    if (d.supplier_invoice_doc) docs.push({ label: '📄 Supplier Invoice', path: d.supplier_invoice_doc, icon: '📄' });
+    if (d.supplier_challan_doc) docs.push({ label: '📜 Delivery Challan', path: d.supplier_challan_doc, icon: '📜' });
+    if (d.supplier_packing_list_doc) docs.push({ label: '📦 Packing List', path: d.supplier_packing_list_doc, icon: '📦' });
+    if (d.material_pictures && Array.isArray(d.material_pictures)) {
+        d.material_pictures.forEach((pic, idx) => {
+            docs.push({ label: `🖼️ Photo ${idx + 1}`, path: pic, icon: '🖼️' });
+        });
+    }
+    if (d.qc_approved_docs && Array.isArray(d.qc_approved_docs)) {
+        d.qc_approved_docs.forEach(pkg => {
+            if (pkg.files && Array.isArray(pkg.files)) {
+                pkg.files.forEach(f => {
+                    if (f.document_path) {
+                        docs.push({ label: `📐 ${f.file_name || f.category || 'QC Doc'}`, path: f.document_path, icon: '📐' });
+                    }
+                });
+            }
+        });
+    }
+    if (d.additional_files && Array.isArray(d.additional_files)) {
+        d.additional_files.forEach(f => {
+            if (f.document_path) {
+                docs.push({ label: `📎 ${f.file_name || 'Additional File'}`, path: f.document_path, icon: '📎' });
+            }
+        });
+    }
+
+    let tabsHtml = '';
+    if (docs.length > 1) {
+        tabsHtml = `
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;" id="disp-doc-tabs">
+                ${docs.map((item, idx) => `
+                    <button type="button" class="btn btn-sm" 
+                        onclick="switchDispatchPreviewDoc('${item.path.replace(/'/g, "\\'")}', '${item.label.replace(/'/g, "\\'")}', this)"
+                        style="border: 1px solid ${idx === 0 ? 'var(--semco-blue)' : 'var(--border-color)'}; background: ${idx === 0 ? '#EFF6FF' : '#F8FAFC'}; color: ${idx === 0 ? 'var(--semco-blue)' : 'var(--text-main)'}; font-weight: ${idx === 0 ? '700' : '500'}; font-size: 0.8rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;">
+                        ${item.label}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    const firstDoc = docs.length > 0 ? docs[0] : null;
+    const docViewerHtml = `
+        <div>
+            ${tabsHtml}
+            <div id="disp-active-doc-viewer">
+                ${renderDispatchDocViewer(firstDoc ? firstDoc.path : null, firstDoc ? firstDoc.label : 'No Document')}
+            </div>
+        </div>
+    `;
+
+    const detailsSummaryHtml = `
+        <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; font-size: 0.88rem; display: flex; flex-direction: column; gap: 14px;">
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; color: var(--semco-blue);">Dispatch Metadata</h4>
+                ${getDispatchStatusBadge(d.status)}
+            </div>
+
+            <div>
+                <strong style="color: var(--semco-blue); font-size: 0.82rem; text-transform: uppercase;">Client Information:</strong>
+                <div><strong>${d.client_name || 'N/A'}</strong></div>
+                <div style="color: var(--text-muted); font-size: 0.82rem;">Phone: ${d.client_phone || 'N/A'}</div>
+                <div style="color: var(--text-muted); font-size: 0.82rem;">Email: ${d.client_email || 'N/A'}</div>
+            </div>
+
+            <div>
+                <strong style="color: var(--semco-blue); font-size: 0.82rem; text-transform: uppercase;">Logistics & Driver:</strong>
+                <div>Transporter: <strong>${d.transporter_name || 'N/A'}</strong></div>
+                <div>Driver: <strong>${d.driver_name || 'N/A'}</strong> (${d.driver_phone || 'N/A'})</div>
+                <div>Vehicle Number: <span class="badge" style="background: #E2E8F0; color: #1E293B;">${d.vehicle_number || 'N/A'}</span></div>
+            </div>
+
+            <div>
+                <strong style="color: var(--semco-blue); font-size: 0.82rem; text-transform: uppercase;">Financial & Destination:</strong>
+                <div>Invoice Amount: <strong>₹${(d.invoice_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></div>
+                <div>Collection Status: ${getCollectionStatusBadge(d.collection_status, d)}</div>
+                <div style="color: var(--text-muted); font-size: 0.82rem; margin-top: 4px;">Destination: ${d.delivery_location || 'N/A'}</div>
+            </div>
+
+            ${docs.length > 0 ? `
+            <div style="border-top: 1px solid var(--border-color); padding-top: 10px;">
+                <strong style="color: var(--semco-blue); font-size: 0.82rem; text-transform: uppercase; display: block; margin-bottom: 8px;">All Attached Files (${docs.length}):</strong>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    ${docs.map(item => {
+                        const u = window.formatFileUrl ? window.formatFileUrl(item.path) : item.path;
+                        return `
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: #FFFFFF; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span style="font-size: 0.82rem;">${item.label}</span>
+                                <a href="${u}" target="_blank" style="font-size: 0.8rem; color: var(--semco-blue); font-weight: 600; text-decoration: underline;">Open ↗️</a>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+    if (bodyEl) {
+        bodyEl.innerHTML = docViewerHtml + detailsSummaryHtml;
+    }
+
+    modal.style.display = 'flex';
+};
+
+window.closeDispatchPreviewModal = function() {
+    const modal = document.getElementById('dispatch-preview-modal');
+    if (modal) modal.style.display = 'none';
+};
+

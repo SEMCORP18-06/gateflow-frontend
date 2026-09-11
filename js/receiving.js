@@ -110,6 +110,10 @@ function renderReceivingTable(records) {
         } else {
             docsHtml += `<span style="font-size: 0.75rem; color: var(--text-muted);">📄 No Invoice</span>`;
         }
+
+        if (r.packing_list_doc) {
+            docsHtml += `<a href="${window.formatFileUrl ? window.formatFileUrl(r.packing_list_doc) : r.packing_list_doc}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #059669; color: #059669; font-size: 0.75rem; font-weight: 600;">📦 Packing List</a>`;
+        }
         docsHtml += `</div>`;
 
         const tr = document.createElement('tr');
@@ -964,7 +968,11 @@ function renderChallansTable(challans) {
 
     challans.forEach(ch => {
         const tr = document.createElement('tr');
-        const docLink = ch.challan_doc ? `<a href="${ch.challan_doc}" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.75rem;">📜 View Challan</a>` : '<span style="color:var(--text-muted);">No Doc</span>';
+        const challanDoc = ch.challan_doc || ch.document_path || "";
+        const docUrl = challanDoc ? (window.formatFileUrl ? window.formatFileUrl(challanDoc) : challanDoc) : "";
+        const docLink = docUrl 
+            ? `<a href="${docUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #D97706; color: #D97706; font-size: 0.75rem; font-weight: 600;">📜 View Challan</a>` 
+            : '<span style="color:var(--text-muted); font-size: 0.75rem;">No Doc</span>';
 
         tr.innerHTML = `
             <td><strong>${ch.challan_number}</strong></td>
@@ -975,6 +983,7 @@ function renderChallansTable(challans) {
             <td>${docLink}</td>
             <td>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                    ${docUrl ? `<button class="btn btn-outline btn-sm" style="border-color: var(--semco-blue); color: var(--semco-blue);" onclick="previewChallanRecord('${ch.id}')">👁️ Preview</button>` : ''}
                     <span class="badge badge-verified">${ch.status || 'Inward Verified'}</span>
                     <button class="btn btn-outline btn-sm" style="border-color: #EF4444; color: #EF4444;" onclick="deleteDeliveryChallan('${ch.id}')">🗑️ Delete</button>
                 </div>
@@ -983,6 +992,57 @@ function renderChallansTable(challans) {
         tbody.appendChild(tr);
     });
 }
+
+window.previewChallanRecord = function(challanId) {
+    const ch = (currentChallans || []).find(c => c.id === challanId);
+    if (!ch) return;
+
+    const modal = document.getElementById("receiving-preview-modal");
+    const splitBody = document.getElementById("rec-preview-split-body");
+    const titleEl = document.getElementById("rec-preview-title");
+    const subtitleEl = document.getElementById("rec-preview-subtitle");
+
+    if (!modal || !splitBody) return;
+
+    if (titleEl) titleEl.innerText = `Challan #${ch.challan_number} — Document Verification`;
+    if (subtitleEl) subtitleEl.innerText = `Vendor: ${ch.vendor_name} | Transporter: ${ch.transporter_name || 'N/A'} | Status: ${ch.status || 'Inward Verified'}`;
+
+    const rawDocPath = ch.challan_doc || ch.document_path || "";
+    const docPath = window.formatFileUrl ? window.formatFileUrl(rawDocPath) : rawDocPath;
+    let viewerHtml = renderDocViewerBlock(docPath, "Delivery Challan Document");
+
+    let dataSummaryHtml = `
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: var(--semco-blue);">📜 Inward Delivery Challan Details</strong>
+                    <span class="badge badge-verified">${ch.status || 'Inward Verified'}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85rem;">
+                    <div>Challan No: <strong>${ch.challan_number}</strong></div>
+                    <div>Challan Date: <strong>${ch.challan_date || 'N/A'}</strong></div>
+                    <div>Vendor: <strong>${ch.vendor_name}</strong></div>
+                    <div>PO Number: <strong>${ch.po_number || 'N/A'}</strong></div>
+                    <div>Transporter: <strong>${ch.transporter_name || 'N/A'}</strong></div>
+                    <div>Vehicle: <strong>${ch.vehicle_number || 'N/A'}</strong></div>
+                </div>
+                <div style="margin-top: 8px; font-size: 0.85rem;">Items Summary: <strong>${ch.items_summary || 'Inward Material Goods'}</strong></div>
+                <div style="margin-top: 4px; font-size: 0.82rem; color: var(--text-muted);">Invoice Status: <strong>${ch.invoice_status || 'Awaiting Invoice'}</strong></div>
+            </div>
+            ${docPath ? `
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 10px; padding: 12px; font-size: 0.85rem;">
+                <a href="${docPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #2563EB; color: #2563EB; font-weight: 600;">↗ Open Challan in New Tab</a>
+            </div>
+            ` : ''}
+        </div>
+    `;
+
+    splitBody.innerHTML = `
+        <div style="flex: 1;">${viewerHtml}</div>
+        <div style="flex: 1;">${dataSummaryHtml}</div>
+    `;
+    modal.style.display = "flex";
+};
 
 window.deleteDeliveryChallan = async function(challanId) {
     const confirmed = await window.showConfirmModal({
@@ -1089,6 +1149,70 @@ function renderReceivingAuditTable(logs) {
 // RECEIVING RECORD DOCUMENT & DATA VERIFICATION PREVIEW
 // ----------------------------------------------------
 
+window.renderDocViewerBlock = function(docPath, label = "Original Uploaded Document") {
+    if (!docPath) {
+        return `
+            <div style="background: #EFF6FF; padding: 30px; border-radius: 12px; border: 1px solid #BFDBFE; text-align: center;">
+                <div style="font-size: 2.5rem; margin-bottom: 10px;">📝</div>
+                <strong style="color: var(--semco-blue); font-size: 1.05rem;">Direct Entry Record</strong>
+                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">No external document file was attached for this selection.</p>
+            </div>
+        `;
+    }
+    const cleanUrl = window.formatFileUrl ? window.formatFileUrl(docPath) : docPath;
+    const lower = cleanUrl.toLowerCase().split('?')[0];
+    if (lower.endsWith(".pdf")) {
+        return `
+            <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="color: var(--semco-blue); font-size: 0.9rem;">📑 ${label} (PDF)</strong>
+                    <a href="${cleanUrl}" target="_blank" class="btn btn-outline btn-sm">↗ Open Full PDF</a>
+                </div>
+                <iframe src="${cleanUrl}" style="width: 100%; height: 580px; border: 1px solid #CBD5E1; border-radius: 8px;"></iframe>
+            </div>
+        `;
+    } else if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp") || lower.endsWith(".svg")) {
+        return `
+            <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <strong style="color: var(--semco-blue); font-size: 0.9rem;">🖼️ ${label} (Image)</strong>
+                    <a href="${cleanUrl}" target="_blank" class="btn btn-outline btn-sm">↗ Open Original</a>
+                </div>
+                <div style="text-align: center; max-height: 580px; overflow: auto; background: #F8FAFC; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1;">
+                    <img src="${cleanUrl}" alt="${label}" style="max-width: 100%; max-height: 540px; object-fit: contain; border-radius: 6px;">
+                </div>
+            </div>
+        `;
+    } else {
+        const fname = cleanUrl.split('/').pop().split('?')[0];
+        return `
+            <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
+                <div style="font-size: 2rem;">📎</div>
+                <strong style="color: var(--semco-blue);">${label}</strong>
+                <div style="margin-top: 10px;">
+                    <a href="${cleanUrl}" target="_blank" class="btn btn-primary btn-sm">📥 Download / View File (${fname})</a>
+                </div>
+            </div>
+        `;
+    }
+};
+
+window.switchReceivingPreviewDoc = function(encUrl, fullLabel, btnEl) {
+    const url = decodeURIComponent(encUrl);
+    const container = document.getElementById("rec-preview-doc-viewer-container");
+    if (container) {
+        container.innerHTML = window.renderDocViewerBlock(url, fullLabel);
+    }
+    document.querySelectorAll(".rec-preview-doc-tab").forEach(b => {
+        b.classList.remove("btn-primary");
+        b.classList.add("btn-outline");
+    });
+    if (btnEl) {
+        btnEl.classList.remove("btn-outline");
+        btnEl.classList.add("btn-primary");
+    }
+};
+
 window.previewReceivingRecord = async function(recordId) {
     let record = (currentReceivingRecords || []).find(r => r.id === recordId);
     if (!record) {
@@ -1117,56 +1241,42 @@ window.previewReceivingRecord = async function(recordId) {
     if (titleEl) titleEl.innerText = `Invoice #${record.invoice_number} — Document Verification`;
     if (subtitleEl) subtitleEl.innerText = `Vendor: ${record.vendor_name} | Amount: ₹${(record.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})} | Status: ${record.status}`;
 
-    const rawDocPath = record.document_path || "";
-    const docPath = window.formatFileUrl ? window.formatFileUrl(rawDocPath) : rawDocPath;
-    let viewerHtml = "";
+    const fields = record.extracted_fields || {};
+    const rawInvPath = record.document_path || "";
+    const rawChallanPath = record.challan_doc_path || fields["Challan Document Path"] || record.challan_doc || "";
+    const rawPackingPath = record.packing_list_doc || "";
 
-    if (docPath) {
-        const lower = docPath.toLowerCase();
-        if (lower.endsWith(".pdf")) {
-            viewerHtml = `
-                <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <strong style="color: var(--semco-blue); font-size: 0.9rem;">📑 Original Uploaded PDF Document</strong>
-                        <a href="${docPath}" target="_blank" class="btn btn-outline btn-sm">↗ Open Full PDF</a>
-                    </div>
-                    <iframe src="${docPath}" style="width: 100%; height: 580px; border: 1px solid #CBD5E1; border-radius: 8px;"></iframe>
-                </div>
-            `;
-        } else if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp")) {
-            viewerHtml = `
-                <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <strong style="color: var(--semco-blue); font-size: 0.9rem;">🖼️ Original Uploaded Image Document</strong>
-                        <a href="${docPath}" target="_blank" class="btn btn-outline btn-sm">↗ Open Original</a>
-                    </div>
-                    <div style="text-align: center; max-height: 580px; overflow: auto; background: #F8FAFC; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1;">
-                        <img src="${docPath}" alt="Uploaded Invoice Document" style="max-width: 100%; max-height: 540px; object-fit: contain; border-radius: 6px;">
-                    </div>
-                </div>
-            `;
-        } else {
-            viewerHtml = `
-                <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
-                    <div style="font-size: 2rem;">📎</div>
-                    <strong style="color: var(--semco-blue);">Attached Document</strong>
-                    <div style="margin-top: 10px;">
-                        <a href="${docPath}" target="_blank" class="btn btn-primary btn-sm">📥 Download / View File (${docPath.split('/').pop()})</a>
-                    </div>
-                </div>
-            `;
-        }
-    } else {
-        viewerHtml = `
-            <div style="background: #EFF6FF; padding: 30px; border-radius: 12px; border: 1px solid #BFDBFE; text-align: center;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">📝</div>
-                <strong style="color: var(--semco-blue); font-size: 1.05rem;">Direct Entry Record</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">This record was logged directly via form entry. No external document file was attached.</p>
+    const invUrl = rawInvPath ? (window.formatFileUrl ? window.formatFileUrl(rawInvPath) : rawInvPath) : "";
+    const challanUrl = rawChallanPath ? (window.formatFileUrl ? window.formatFileUrl(rawChallanPath) : rawChallanPath) : "";
+    const packingUrl = rawPackingPath ? (window.formatFileUrl ? window.formatFileUrl(rawPackingPath) : rawPackingPath) : "";
+
+    // Gather available documents
+    const docOptions = [];
+    if (invUrl) docOptions.push({ url: invUrl, label: "📄 Invoice Doc", fullLabel: "Original Uploaded Invoice Document" });
+    if (challanUrl) docOptions.push({ url: challanUrl, label: "📜 Challan Doc", fullLabel: "Delivery Challan Document" });
+    if (packingUrl) docOptions.push({ url: packingUrl, label: "📦 Packing List", fullLabel: "Packing List Document" });
+
+    const activeDoc = docOptions.length > 0 ? docOptions[0] : null;
+    let tabsHtml = "";
+
+    if (docOptions.length > 1) {
+        tabsHtml = `
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; background: #F1F5F9; padding: 6px; border-radius: 10px; border: 1px solid #CBD5E1; flex-wrap: wrap;">
+                ${docOptions.map((opt, idx) => `
+                    <button type="button" class="btn btn-sm rec-preview-doc-tab ${idx === 0 ? 'btn-primary' : 'btn-outline'}" style="font-size: 0.8rem; font-weight: 600;" onclick="switchReceivingPreviewDoc('${encodeURIComponent(opt.url)}', '${opt.fullLabel}', this)">
+                        ${opt.label}
+                    </button>
+                `).join('')}
             </div>
         `;
     }
 
-    const fields = record.extracted_fields || {};
+    const viewerHtml = `
+        ${tabsHtml}
+        <div id="rec-preview-doc-viewer-container">
+            ${renderDocViewerBlock(activeDoc ? activeDoc.url : "", activeDoc ? activeDoc.fullLabel : "Original Document")}
+        </div>
+    `;
     let dataSummaryHtml = `
         <div style="display: flex; flex-direction: column; gap: 14px;">
             <div style="background: #F8FAFC; padding: 14px; border-radius: 12px; border: 1px solid var(--border-color);">
@@ -1266,52 +1376,11 @@ window.previewCurrentOCRScan = function() {
     if (titleEl) titleEl.innerText = `Invoice #${invNum} — Document Preview`;
     if (subtitleEl) subtitleEl.innerText = `Vendor: ${vendorName} | Pre-Save Verification`;
 
-    let viewerHtml = "";
+    const challanDocPath = document.getElementById("rec-challan-doc-path") ? document.getElementById("rec-challan-doc-path").value : "";
+    const activePath = docPath || challanDocPath;
+    const activeLabel = docPath ? "Uploaded Invoice Document" : "Uploaded Challan Document";
 
-    if (docPath) {
-        const lower = docPath.toLowerCase();
-        if (lower.endsWith(".pdf")) {
-            viewerHtml = `
-                <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <strong style="color: var(--semco-blue); font-size: 0.9rem;">📑 Uploaded PDF Document</strong>
-                        <a href="${docPath}" target="_blank" class="btn btn-outline btn-sm">↗ Open Full PDF</a>
-                    </div>
-                    <iframe src="${docPath}" style="width: 100%; height: 580px; border: 1px solid #CBD5E1; border-radius: 8px;"></iframe>
-                </div>
-            `;
-        } else if (lower.endsWith(".png") || lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".webp")) {
-            viewerHtml = `
-                <div style="background: #FFFFFF; padding: 12px; border-radius: 12px; border: 1px solid var(--border-color);">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <strong style="color: var(--semco-blue); font-size: 0.9rem;">🖼️ Uploaded Image Document</strong>
-                        <a href="${docPath}" target="_blank" class="btn btn-outline btn-sm">↗ Open Original</a>
-                    </div>
-                    <div style="text-align: center; max-height: 580px; overflow: auto; background: #F8FAFC; padding: 10px; border-radius: 8px; border: 1px solid #CBD5E1;">
-                        <img src="${docPath}" alt="Uploaded Invoice Document" style="max-width: 100%; max-height: 540px; object-fit: contain; border-radius: 6px;">
-                    </div>
-                </div>
-            `;
-        } else {
-            viewerHtml = `
-                <div style="background: #F8FAFC; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); text-align: center;">
-                    <div style="font-size: 2rem;">📎</div>
-                    <strong style="color: var(--semco-blue);">Attached Document</strong>
-                    <div style="margin-top: 10px;">
-                        <a href="${docPath}" target="_blank" class="btn btn-primary btn-sm">📥 Download / View (${docPath.split('/').pop()})</a>
-                    </div>
-                </div>
-            `;
-        }
-    } else {
-        viewerHtml = `
-            <div style="background: #EFF6FF; padding: 30px; border-radius: 12px; border: 1px solid #BFDBFE; text-align: center;">
-                <div style="font-size: 2.5rem; margin-bottom: 10px;">📝</div>
-                <strong style="color: var(--semco-blue); font-size: 1.05rem;">No Document Uploaded Yet</strong>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 6px;">Upload an invoice file to preview it here.</p>
-            </div>
-        `;
-    }
+    const viewerHtml = renderDocViewerBlock(activePath, activeLabel);
 
     // Build extracted data summary from current fields
     let dataSummaryHtml = `
@@ -2226,10 +2295,21 @@ window.renderOnlyInvoicesByInwardDate = function(filterMode = 'ALL', customDateS
             const fields = r.extracted_fields || {};
             const challanNum = r.challan_number || fields["Challan Number"] || fields["Linked Challan Number"] || "N/A";
             const invDocPath = r.document_path || "";
-            
-            let docBtn = invDocPath 
-                ? `<a href="${invDocPath}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #2563EB; color: #2563EB; font-size: 0.75rem; font-weight: 600;">📄 View Invoice</a>`
-                : `<span style="font-size: 0.75rem; color: var(--text-muted);">No File</span>`;
+            const challanDocPath = r.challan_doc_path || fields["Challan Document Path"] || r.challan_doc || "";
+            const invUrl = invDocPath ? (window.formatFileUrl ? window.formatFileUrl(invDocPath) : invDocPath) : "";
+            const challanUrl = challanDocPath ? (window.formatFileUrl ? window.formatFileUrl(challanDocPath) : challanDocPath) : "";
+
+            let docBtn = `<div style="display: flex; gap: 4px; flex-wrap: wrap;">`;
+            if (invUrl) {
+                docBtn += `<a href="${invUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #2563EB; color: #2563EB; font-size: 0.75rem; font-weight: 600;">📄 Invoice</a>`;
+            }
+            if (challanUrl) {
+                docBtn += `<a href="${challanUrl}" target="_blank" class="btn btn-outline btn-sm" style="border-color: #D97706; color: #D97706; font-size: 0.75rem; font-weight: 600;">📜 Challan</a>`;
+            }
+            if (!invUrl && !challanUrl) {
+                docBtn += `<span style="font-size: 0.75rem; color: var(--text-muted);">No File</span>`;
+            }
+            docBtn += `</div>`;
 
             rowsHtml += `
                 <tr>

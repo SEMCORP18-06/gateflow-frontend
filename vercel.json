@@ -5,6 +5,14 @@
       "dest": "/$1"
     },
     {
+      "src": "/uploads/(.*)",
+      "dest": "https://gateflow-backend.vercel.app/uploads/$1"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "https://gateflow-backend.vercel.app/api/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/$1"
     }

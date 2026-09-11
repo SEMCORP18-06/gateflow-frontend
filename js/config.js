@@ -20,16 +20,35 @@
     };
 
     window.formatFileUrl = function(path) {
+        if (!path || path === '#' || typeof path !== 'string') return '#';
+        path = path.trim();
         if (!path || path === '#') return '#';
-        if (typeof path !== 'string') return '#';
-        if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+
+        // Normalize Windows backslashes
+        path = path.replace(/\\/g, '/');
+
+        if (path.startsWith('data:')) {
             return path;
         }
-        const backend = window.getBackendUrl ? window.getBackendUrl() : '';
-        if (path.startsWith('/')) {
-            return backend + path;
+
+        let fullUrl = '';
+        if (path.startsWith('http://') || path.startsWith('https://')) {
+            fullUrl = path;
+        } else {
+            const backend = window.getBackendUrl ? window.getBackendUrl() : '';
+            if (path.startsWith('/')) {
+                fullUrl = (backend ? backend : '') + path;
+            } else {
+                fullUrl = (backend ? backend : '') + '/' + path;
+            }
         }
-        return backend + '/' + path;
+
+        // Safely encode URI to handle spaces and special chars without breaking protocol/slashes
+        try {
+            return encodeURI(decodeURI(fullUrl));
+        } catch (e) {
+            return encodeURI(fullUrl);
+        }
     };
 
     // Override fetch wrapper to automatically prepend backend URL to /api/ requests with failover

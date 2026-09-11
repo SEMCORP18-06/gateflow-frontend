@@ -2220,6 +2220,27 @@
         </div>
     </div>
 
+    <!-- Dispatch Bundle Document Verification & Preview Modal -->
+    <div id="dispatch-preview-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(8px); margin: 0; padding: 20px; box-sizing: border-box;">
+        <div class="modal-card" style="width: 95vw; max-width: 1100px; max-height: 90vh; overflow-y: auto; padding: 24px; background: #FFFFFF; border-radius: 16px; box-shadow: var(--shadow-xl);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 1.5rem;">🚚</span>
+                    <div>
+                        <h3 style="margin: 0; color: var(--semco-blue); font-size: 1.15rem;" id="disp-preview-title">Dispatch Bundle & Document Preview</h3>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);" id="disp-preview-subtitle">Verify dispatch bundle, documents, and logistics credentials</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" onclick="closeDispatchPreviewModal()">❌ Close</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 20px;" id="disp-preview-split-body">
+                <!-- Left Column: Document Viewer -->
+                <!-- Right Column: Dispatch Details Summary -->
+            </div>
+        </div>
+    </div>
+
     <!-- SEMCO Purchase Order Official Document Audit & Print Modal -->
     <div id="semco-po-preview-modal" class="modal-backdrop" style="display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 99999; align-items: center; justify-content: center; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(6px); margin: 0; padding: 20px; box-sizing: border-box;">
         <div class="modal-card" style="width: 95vw; max-width: 950px; max-height: 90vh; overflow-y: auto; overflow-x: hidden; padding: 24px; background: #FFFFFF; border-radius: 16px; box-shadow: var(--shadow-xl); text-align: left;">

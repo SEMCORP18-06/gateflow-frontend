@@ -360,8 +360,9 @@ window.addDispatchAdditionalFileRow = function() {
     row.innerHTML = `
         <input type="text" class="form-control dispatch-add-file-label" placeholder="Document Label (e.g. Revised Drawing, Site Photo)" style="flex: 1; font-size: 0.82rem;">
         <div style="display: flex; flex: 1.5; gap: 6px; align-items: center;">
-            <input type="file" class="form-control dispatch-add-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx" style="font-size: 0.82rem;" name="additional_files" onchange="handleGenericFileInputChange(this, '${rowId}-discard')">
-            <button type="button" id="${rowId}-discard" class="btn btn-outline btn-sm" onclick="clearSpecificFileInput(this.previousElementSibling, this)" style="display: none; border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; white-space: nowrap; height: 34px;" title="Discard selected file">🗑️ Discard</button>
+            <input type="file" class="form-control dispatch-add-file-input" accept="image/*,.pdf,.doc,.docx,.xlsx" style="font-size: 0.82rem;" name="additional_files" onchange="handleGenericFileInputChange(this, '${rowId}-discard', '${rowId}-view')">
+            <button type="button" id="${rowId}-view" class="btn btn-outline btn-sm" onclick="previewGenericRowFile(this)" style="display: none; border-color: #2563EB; color: #2563EB; padding: 2px 8px; font-size: 0.75rem; white-space: nowrap; height: 34px;" title="View selected file">👁️ View</button>
+            <button type="button" id="${rowId}-discard" class="btn btn-outline btn-sm" onclick="clearSpecificFileInput(this.previousElementSibling.previousElementSibling, this, document.getElementById('${rowId}-view'))" style="display: none; border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; white-space: nowrap; height: 34px;" title="Discard selected file">🗑️ Discard</button>
         </div>
         <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('${rowId}').remove()" style="border-color: #EF4444; color: #EF4444; padding: 2px 8px; font-size: 0.75rem; height: 34px;" title="Remove row">✖</button>
     `;

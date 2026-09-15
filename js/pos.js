@@ -140,9 +140,9 @@ window.onPOProjectNumberSelect = function(projectNo) {
     }
     if (!proj) return;
 
-    // 1. Autofill Header Metadata
+    // 1. Autofill Header Metadata (only populate PO number if blank to prevent overwriting user's sequential PO)
     const poNoInput = document.getElementById('semco-po-no');
-    if (poNoInput) {
+    if (poNoInput && !poNoInput.value.trim()) {
         const cleanNo = projectNo.replace(/[^0-9A-Z]/gi, '');
         poNoInput.value = `26/27 - ${cleanNo.slice(-6)}`;
     }
@@ -582,6 +582,9 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
             if (window.showAlertModal) {
                 window.showAlertModal({ icon: "✅", title: titleMsg, message: bodyMsg });
             }
+            if (saved && (saved.po_number || poNo)) {
+                updateLastTakenPODisplay(saved.po_number || poNo);
+            }
             if (typeof fetchPurchaseOrders === 'function') fetchPurchaseOrders();
             if (typeof switchPOSubTab === 'function') switchPOSubTab('repo');
         } else {
@@ -871,6 +874,94 @@ window.closeSEMCOPOPreviewModal = function() {
     if (modal) modal.style.display = "none";
 };
 
+// --- Persistent PO Number Tracking & Sequencing ---
+function getNextPONumber(poNumber) {
+    if (!poNumber) return '26/27 - 001';
+    const match = String(poNumber).match(/^(.*?)(\d+)$/);
+    if (match) {
+        const prefix = match[1];
+        const numStr = match[2];
+        const nextNum = parseInt(numStr, 10) + 1;
+        const padded = String(nextNum).padStart(numStr.length, '0');
+        return prefix + padded;
+    }
+    return poNumber + ' - 01';
+}
+window.getNextPONumber = getNextPONumber;
+
+function updateLastTakenPODisplay(poNum) {
+    if (!poNum) return;
+    const cleanPo = String(poNum).trim();
+    const badgeVal = document.getElementById('semco-last-po-val');
+    if (badgeVal) badgeVal.textContent = cleanPo;
+
+    const poInput = document.getElementById('semco-po-no');
+    if (poInput) {
+        // Display the last taken PO number if empty or default placeholder
+        if (!poInput.value || poInput.value === '26/27 - 001' || poInput.value === '26/27 - 208') {
+            poInput.value = cleanPo;
+        }
+    }
+
+    try {
+        localStorage.setItem('semco_last_taken_po_number', cleanPo);
+    } catch (e) {}
+}
+window.updateLastTakenPODisplay = updateLastTakenPODisplay;
+
+window.advanceToNextPONumber = function() {
+    const poInput = document.getElementById('semco-po-no');
+    let currentVal = poInput?.value?.trim();
+    if (!currentVal) {
+        currentVal = localStorage.getItem('semco_last_taken_po_number') || document.getElementById('semco-last-po-val')?.textContent?.trim() || '26/27 - 208';
+    }
+    const nextVal = getNextPONumber(currentVal);
+    if (poInput) {
+        poInput.value = nextVal;
+        poInput.focus();
+        poInput.select();
+    }
+    if (window.showAlertModal) {
+        window.showAlertModal({
+            icon: "🔢",
+            title: "Next PO Number Ready",
+            message: `Previous PO was ${currentVal}. Set new PO Number to ${nextVal}.`
+        });
+    }
+};
+
+window.onPONumberChange = function(val) {
+    if (!val) return;
+    try {
+        localStorage.setItem('semco_last_typed_po_number', String(val).trim());
+    } catch (e) {}
+};
+
+window.initLastTakenPONumber = async function() {
+    // 1. Instant zero-latency load from localStorage
+    let savedPo = null;
+    try {
+        savedPo = localStorage.getItem('semco_last_taken_po_number');
+    } catch (e) {}
+
+    if (savedPo) {
+        updateLastTakenPODisplay(savedPo);
+    }
+
+    // 2. Cross-device synchronization from backend
+    try {
+        const res = await fetch('/api/pos/last-taken');
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.last_po_number) {
+                updateLastTakenPODisplay(data.last_po_number);
+            }
+        }
+    } catch (err) {
+        console.warn("Could not fetch last taken PO from backend:", err);
+    }
+};
+
 // Initialize Table on Startup
 document.addEventListener("DOMContentLoaded", function() {
     renderPOLineItemsTable();
@@ -880,6 +971,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const prepDateEl = document.getElementById('semco-preparer-date');
     if (prepDateEl) prepDateEl.textContent = new Date().toLocaleDateString('en-GB');
 
+    initLastTakenPONumber();
     fetchPurchaseOrders();
     fetchPortalProjects();
 });

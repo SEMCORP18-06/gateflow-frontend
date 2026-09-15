@@ -375,6 +375,15 @@ function updatePOLineItem(index, field, val) {
 }
 window.updatePOLineItem = updatePOLineItem;
 
+// Safely parse manual charges (Freight & P&F) with zero default and full NaN/empty protection
+function parseManualCharge(val) {
+    if (val === undefined || val === null || typeof val === 'object') return 0;
+    const s = String(val).trim();
+    if (s === '' || isNaN(Number(s))) return 0;
+    const num = parseFloat(s);
+    return isNaN(num) ? 0 : Math.max(0, num);
+}
+
 // Recalculate Subtotal, Freight, P&F, Taxes, Grand Total & Rupees in Words
 function recalculateSEMCOTotals() {
     let totalQty = 0;
@@ -392,8 +401,8 @@ function recalculateSEMCOTotals() {
         totalTaxAmount += (lineAmount * gst / 100);
     });
 
-    const freight = parseFloat(document.getElementById('semco-input-freight')?.value) || 0;
-    const pfCharges = parseFloat(document.getElementById('semco-input-pf')?.value) || 0;
+    const freight = parseManualCharge(document.getElementById('semco-input-freight')?.value);
+    const pfCharges = parseManualCharge(document.getElementById('semco-input-pf')?.value);
 
     // Incidental charges (Freight & P&F) GST calculation:
     // Determine effective GST rate based on items' selected percentages
@@ -411,12 +420,17 @@ function recalculateSEMCOTotals() {
     const finalGstAmount = totalTaxAmount + incidentalTax;
     const grandTotal = subTotal + freight + pfCharges + finalGstAmount;
 
+    // Ensure numeric safety
+    const safeSubTotal = isNaN(subTotal) ? 0 : subTotal;
+    const safeTaxAmount = isNaN(finalGstAmount) ? 0 : finalGstAmount;
+    const safeGrandTotal = isNaN(grandTotal) ? 0 : grandTotal;
+
     // Update DOM Display
     const qtyEl = document.getElementById('semco-calc-total-qty');
     if (qtyEl) qtyEl.textContent = totalQty;
 
     const subEl = document.getElementById('semco-calc-subtotal');
-    if (subEl) subEl.textContent = `₹ ${subTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    if (subEl) subEl.textContent = `₹ ${safeSubTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const taxLabelEl = document.getElementById('semco-tax-label');
     if (taxLabelEl) {
@@ -430,13 +444,13 @@ function recalculateSEMCOTotals() {
     }
 
     const taxEl = document.getElementById('semco-calc-tax');
-    if (taxEl) taxEl.textContent = `₹ ${finalGstAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    if (taxEl) taxEl.textContent = `₹ ${safeTaxAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const grandEl = document.getElementById('semco-calc-grandtotal');
-    if (grandEl) grandEl.textContent = `₹ ${grandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+    if (grandEl) grandEl.textContent = `₹ ${safeGrandTotal.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
 
     const wordsDisplay = document.getElementById('semco-amount-words-display');
-    if (wordsDisplay) wordsDisplay.textContent = convertNumberToIndianWords(Math.round(grandTotal));
+    if (wordsDisplay) wordsDisplay.textContent = convertNumberToIndianWords(Math.round(safeGrandTotal));
 }
 window.recalculateSEMCOTotals = recalculateSEMCOTotals;
 
@@ -491,8 +505,8 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
         totalTaxAmount += (lineAmt * g / 100);
     });
 
-    const freight = parseFloat(document.getElementById('semco-input-freight')?.value) || 0;
-    const pfCharges = parseFloat(document.getElementById('semco-input-pf')?.value) || 0;
+    const freight = parseManualCharge(document.getElementById('semco-input-freight')?.value);
+    const pfCharges = parseManualCharge(document.getElementById('semco-input-pf')?.value);
 
     const activeGstRates = poLineItems.map(item => (item.gst_percent !== undefined && item.gst_percent !== null && item.gst_percent !== '') ? Number(item.gst_percent) : 18);
     const uniqueRates = [...new Set(activeGstRates)];
@@ -739,6 +753,9 @@ window.openSEMCOPOPrintView = function(poId) {
     const uniqueItemRates = [...new Set(itemGstRates)];
     const modalTaxLabel = uniqueItemRates.length === 1 ? `IGST ${uniqueItemRates[0]}%` : (uniqueItemRates.length > 1 ? 'Total GST' : 'GST');
 
+    const poFreight = parseManualCharge(po.freight);
+    const poPF = parseManualCharge(po.pf_charges);
+
     const printHtml = `
         <div id="semco-printable-po-doc" style="background: white; border: 2px solid #0F172A; padding: 20px; font-family: Arial, sans-serif; text-align: left; box-sizing: border-box; overflow-x: hidden;">
             
@@ -810,8 +827,8 @@ window.openSEMCOPOPrintView = function(poId) {
                 </div>
                 <div style="width:260px; border:1px solid #CBD5E1; font-size:0.82rem;">
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Subtotal:</span><strong>₹ ${(po.sub_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong></div>
-                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Freight:</span><span>₹ ${(po.freight || 1500).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
-                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>P&F:</span><span>₹ ${(po.pf_charges || 500).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Freight:</span><span>₹ ${poFreight.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
+                    <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>P&F:</span><span>₹ ${poPF.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>${modalTaxLabel}:</span><span>₹ ${(po.igst_amount !== undefined ? po.igst_amount : 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:6px 8px; background:#1E3A8A; color:white;"><strong>Grand Total:</strong><strong>₹ ${(po.grand_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong></div>
                 </div>

@@ -1,6 +1,8 @@
 // Module 1: SEMCO Purchase Orders (PO Preparation & Approval Workflow)
 
 let currentPurchaseOrders = [];
+let currentEditingPOId = null;
+window.currentEditingPOId = currentEditingPOId;
 let DEFAULT_PORTAL_PROJECTS = [
     {
         "project_no": "PRJ-SEM-2026-101",
@@ -227,6 +229,309 @@ window.fetchPurchaseOrders = async function() {
     } catch (err) {
         console.error("Error fetching purchase orders:", err);
     }
+};
+
+// Populate PO Dropdowns across GateFlow (e.g. Edit PO dropdown in Section 1)
+function populatePODropdowns(pos) {
+    if (!pos) pos = currentPurchaseOrders || [];
+    const editSelect = document.getElementById('semco-po-edit-select');
+    if (editSelect) {
+        const currentVal = editSelect.value;
+        editSelect.innerHTML = `<option value="">-- Choose Existing PO to Edit from Master Repository (${pos.length} Available) --</option>`;
+        pos.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            const vendor = p.vendor_name || p.vendor_client_name || 'Vendor';
+            const grandTotal = (p.grand_total || p.total_amount || 0).toLocaleString('en-IN');
+            const status = p.status || 'DRAFT';
+            opt.textContent = `PO #${p.po_number} — ${vendor} (₹${grandTotal} • ${status})`;
+            editSelect.appendChild(opt);
+        });
+        if (currentVal) editSelect.value = currentVal;
+    }
+}
+window.populatePODropdowns = populatePODropdowns;
+
+// Load an entire Purchase Order into the Section 1 PO Builder form for full editing
+window.loadPOForEditing = function(poId) {
+    if (!poId) return;
+    const po = currentPurchaseOrders.find(p => p.id === poId || p.po_number === poId);
+    if (!po) {
+        if (window.showAlertModal) {
+            window.showAlertModal({ icon: "⚠️", title: "PO Not Found", message: "Selected Purchase Order could not be located in the repository." });
+        }
+        return;
+    }
+
+    currentEditingPOId = po.id;
+    window.currentEditingPOId = currentEditingPOId;
+
+    // 1. Header Metadata
+    const poNoInput = document.getElementById('semco-po-no');
+    if (poNoInput) poNoInput.value = po.po_number || '';
+
+    const poDateInput = document.getElementById('semco-po-date');
+    if (poDateInput) poDateInput.value = po.po_date || '';
+
+    const quotModeInput = document.getElementById('semco-po-quot-mode');
+    if (quotModeInput) quotModeInput.value = po.quotation_mode || 'MAIL';
+
+    const quotNoInput = document.getElementById('semco-po-quot-no');
+    if (quotNoInput) quotNoInput.value = po.quotation_ref || '';
+
+    const mobileInput = document.getElementById('semco-po-mobile');
+    if (mobileInput) mobileInput.value = po.mobile_no || '';
+
+    const emailInput = document.getElementById('semco-po-email');
+    if (emailInput) emailInput.value = po.email_id || '';
+
+    const amendNoInput = document.getElementById('semco-po-amend-no');
+    if (amendNoInput) amendNoInput.value = po.amendment_no || '-';
+
+    const amendDateInput = document.getElementById('semco-po-amend-date');
+    if (amendDateInput) amendDateInput.value = po.amendment_date || '-';
+
+    // 2. Vendor Details
+    const vendorNameInput = document.getElementById('semco-vendor-name');
+    if (vendorNameInput) vendorNameInput.value = po.vendor_name || po.vendor_client_name || '';
+
+    const vendorAddrInput = document.getElementById('semco-vendor-address');
+    if (vendorAddrInput) vendorAddrInput.value = po.vendor_address || '';
+
+    const vendorGstInput = document.getElementById('semco-vendor-gst');
+    if (vendorGstInput) vendorGstInput.value = po.vendor_gstin || '';
+
+    // 3. Ship To Details
+    const shipNameInput = document.getElementById('semco-ship-name');
+    if (shipNameInput) shipNameInput.value = po.consignee_name || '';
+
+    const shipAddrInput = document.getElementById('semco-ship-address');
+    if (shipAddrInput) shipAddrInput.value = po.ship_address || '';
+
+    const shipGstInput = document.getElementById('semco-ship-gst');
+    if (shipGstInput) shipGstInput.value = po.ship_gstin || '';
+
+    // 4. Line Items
+    if (po.line_items && Array.isArray(po.line_items) && po.line_items.length > 0) {
+        poLineItems = JSON.parse(JSON.stringify(po.line_items));
+    } else {
+        poLineItems = [{
+            line_no: 1,
+            goods_description: "General Supplies / Engineering Equipment",
+            project_no: "PRJ-992",
+            hsn_sac: "8414",
+            qty: po.total_qty || 1,
+            uom: "Nos",
+            base_rate: po.sub_total || po.total_amount || 0,
+            gst_percent: po.igst_rate || 18,
+            amount: po.sub_total || po.total_amount || 0
+        }];
+    }
+    window.poLineItems = poLineItems;
+    renderPOLineItemsTable();
+
+    // 5. Freight & P&F
+    const freightInput = document.getElementById('semco-input-freight');
+    if (freightInput) freightInput.value = (po.freight !== undefined && po.freight !== null && po.freight !== 0) ? po.freight : '';
+
+    const pfInput = document.getElementById('semco-input-pf');
+    if (pfInput) pfInput.value = (po.pf_charges !== undefined && po.pf_charges !== null && po.pf_charges !== 0) ? po.pf_charges : '';
+
+    // 6. Attachments
+    const attachInput = document.getElementById('semco-po-attachments');
+    if (attachInput) attachInput.value = po.attachments || '';
+
+    // 7. Terms & Conditions
+    const termPaymentInput = document.getElementById('semco-term-payment');
+    if (termPaymentInput) termPaymentInput.value = po.payment_terms || '';
+
+    const termFreightInput = document.getElementById('semco-term-freight');
+    if (termFreightInput) termFreightInput.value = po.freight_terms || '';
+
+    const termRemarksInput = document.getElementById('semco-term-remarks');
+    if (termRemarksInput) termRemarksInput.value = po.remarks || '';
+
+    const termDispatchInput = document.getElementById('semco-term-dispatch-mode');
+    if (termDispatchInput) termDispatchInput.value = po.mode_of_dispatch || '';
+
+    const termInspectionInput = document.getElementById('semco-term-inspection');
+    if (termInspectionInput) termInspectionInput.value = po.inspection_terms || '';
+
+    const termDeliveryInput = document.getElementById('semco-term-delivery');
+    if (termDeliveryInput) termDeliveryInput.value = po.delivery_terms || '';
+
+    // 8. Prepared By & Date
+    const prepName = document.getElementById('semco-preparer-name');
+    if (prepName) prepName.textContent = po.prepared_by?.name || 'Mr. Umesh H. Patil';
+
+    const prepDate = document.getElementById('semco-preparer-date');
+    if (prepDate) prepDate.textContent = po.prepared_by?.date || po.po_date || new Date().toLocaleDateString('en-GB');
+
+    // Recalculate totals
+    recalculateSEMCOTotals();
+
+    // 9. Update UI state to show editing mode
+    const editBanner = document.getElementById('semco-po-editing-banner');
+    const editNum = document.getElementById('semco-editing-po-num');
+    const statusBadge = document.getElementById('semco-editing-po-status-badge');
+    if (editBanner) editBanner.style.display = 'block';
+    if (editNum) editNum.textContent = `#${po.po_number}`;
+    if (statusBadge) {
+        statusBadge.textContent = `Status: ${po.status || 'DRAFT'}`;
+        if (po.status === 'APPROVED') {
+            statusBadge.style.background = '#DCFCE7';
+            statusBadge.style.color = '#15803D';
+            statusBadge.style.borderColor = '#86EFAC';
+        } else if (po.status === 'SUBMITTED_FOR_APPROVAL') {
+            statusBadge.style.background = '#FEF3C7';
+            statusBadge.style.color = '#92400E';
+            statusBadge.style.borderColor = '#FDE68A';
+        } else {
+            statusBadge.style.background = '#F1F5F9';
+            statusBadge.style.color = '#475569';
+            statusBadge.style.borderColor = '#CBD5E1';
+        }
+    }
+
+    const btnCancel = document.getElementById('semco-po-btn-cancel-edit');
+    if (btnCancel) btnCancel.style.display = 'inline-flex';
+
+    const btnDup = document.getElementById('semco-po-btn-duplicate');
+    if (btnDup) btnDup.style.display = 'inline-flex';
+
+    const btnDraft = document.getElementById('semco-po-btn-draft');
+    if (btnDraft) btnDraft.textContent = '💾 Update Draft Changes';
+
+    const btnSubmit = document.getElementById('semco-po-btn-submit');
+    if (btnSubmit) {
+        btnSubmit.textContent = po.status === 'APPROVED' ? '💾 Update & Save Approved PO' : '🚀 Update & Save PO Changes';
+    }
+
+    // Sync the edit dropdown in section 1
+    const editSelect = document.getElementById('semco-po-edit-select');
+    if (editSelect) editSelect.value = po.id;
+
+    // Switch to section 1 prep tab and scroll smoothly into view
+    switchPOSubTab('prep');
+    const builderForm = document.getElementById('semco-po-builder-form');
+    if (builderForm) {
+        builderForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    if (window.showAlertModal) {
+        window.showAlertModal({
+            icon: "✏️",
+            title: `Editing PO #${po.po_number}`,
+            message: `Entire Purchase Order #${po.po_number} for ${po.vendor_name || po.vendor_client_name} is now loaded. You can edit any field, modify quantities, rates, terms, or addresses. Changes will be saved live!`
+        });
+    }
+};
+
+window.cancelPOEditing = function() {
+    currentEditingPOId = null;
+    window.currentEditingPOId = null;
+
+    const editBanner = document.getElementById('semco-po-editing-banner');
+    if (editBanner) editBanner.style.display = 'none';
+
+    const btnCancel = document.getElementById('semco-po-btn-cancel-edit');
+    if (btnCancel) btnCancel.style.display = 'none';
+
+    const btnDup = document.getElementById('semco-po-btn-duplicate');
+    if (btnDup) btnDup.style.display = 'none';
+
+    const btnDraft = document.getElementById('semco-po-btn-draft');
+    if (btnDraft) btnDraft.textContent = '💾 Save as Draft PO';
+
+    const btnSubmit = document.getElementById('semco-po-btn-submit');
+    if (btnSubmit) btnSubmit.textContent = '🚀 Submit PO for Approval';
+
+    const editSelect = document.getElementById('semco-po-edit-select');
+    if (editSelect) editSelect.value = '';
+
+    // Reset default line items and next PO number
+    advanceToNextPONumber();
+    const dateInput = document.getElementById('semco-po-date');
+    if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+    poLineItems = [
+        { line_no: 1, goods_description: "High Vacuum Pump Assembly 10G", project_no: "PRJ-SEM-2026-101", hsn_sac: "8414", qty: 2, uom: "Nos", base_rate: 45000, gst_percent: 18, amount: 90000 },
+        { line_no: 2, goods_description: "Stainless Steel Flange 4 Inch", project_no: "PRJ-SEM-2026-101", hsn_sac: "7307", qty: 10, uom: "Nos", base_rate: 1200, gst_percent: 18, amount: 12000 },
+        { line_no: 3, goods_description: "Digital Vacuum Gauge Controller", project_no: "PRJ-SEM-2026-101", hsn_sac: "9026", qty: 1, uom: "Nos", base_rate: 15000, gst_percent: 18, amount: 15000 }
+    ];
+    window.poLineItems = poLineItems;
+    renderPOLineItemsTable();
+
+    const freightInput = document.getElementById('semco-input-freight');
+    if (freightInput) freightInput.value = '';
+    const pfInput = document.getElementById('semco-input-pf');
+    if (pfInput) pfInput.value = '';
+
+    recalculateSEMCOTotals();
+
+    if (window.showAlertModal) {
+        window.showAlertModal({
+            icon: "ℹ️",
+            title: "New PO Mode Restored",
+            message: "Purchase Order Builder has been reset back to new PO preparation mode."
+        });
+    }
+};
+
+window.duplicateCurrentPOAsNew = function() {
+    currentEditingPOId = null;
+    window.currentEditingPOId = null;
+
+    const editBanner = document.getElementById('semco-po-editing-banner');
+    if (editBanner) editBanner.style.display = 'none';
+
+    const btnCancel = document.getElementById('semco-po-btn-cancel-edit');
+    if (btnCancel) btnCancel.style.display = 'none';
+
+    const btnDup = document.getElementById('semco-po-btn-duplicate');
+    if (btnDup) btnDup.style.display = 'none';
+
+    const btnDraft = document.getElementById('semco-po-btn-draft');
+    if (btnDraft) btnDraft.textContent = '💾 Save as Draft PO';
+
+    const btnSubmit = document.getElementById('semco-po-btn-submit');
+    if (btnSubmit) btnSubmit.textContent = '🚀 Submit PO for Approval';
+
+    const editSelect = document.getElementById('semco-po-edit-select');
+    if (editSelect) editSelect.value = '';
+
+    // Assign next PO number
+    advanceToNextPONumber();
+    recalculateSEMCOTotals();
+
+    if (window.showAlertModal) {
+        window.showAlertModal({
+            icon: "📋",
+            title: "PO Duplicated as New",
+            message: "All line items, vendor details, and terms retained. A new sequential PO number has been assigned. You can now save or submit this as a brand new PO."
+        });
+    }
+};
+
+window.onExistingPOSelectForEdit = function(poId) {
+    if (!poId) return;
+    loadPOForEditing(poId);
+};
+
+window.triggerLoadSelectedPOForEdit = function() {
+    const select = document.getElementById('semco-po-edit-select');
+    const val = select ? select.value : '';
+    if (!val) {
+        if (window.showAlertModal) {
+            window.showAlertModal({
+                icon: "⚠️",
+                title: "Select PO to Edit",
+                message: "Please select a Purchase Order from the dropdown list to load and edit."
+            });
+        }
+        return;
+    }
+    loadPOForEditing(val);
 };
 
 window.switchPOSubTab = function(subKey) {
@@ -522,10 +827,13 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
     const finalGstAmount = totalTaxAmount + incidentalTax;
     const grandTotal = subTotal + freight + pfCharges + finalGstAmount;
 
+    const isEditing = Boolean(currentEditingPOId);
     const payload = {
+        id: currentEditingPOId || undefined,
         po_number: poNo,
         po_date: poDate || new Date().toISOString().split('T')[0],
         quotation_ref: document.getElementById('semco-po-quot-no')?.value || "QTN-2026-042",
+        quotation_mode: document.getElementById('semco-po-quot-mode')?.value || "MAIL",
         mobile_no: document.getElementById('semco-po-mobile')?.value || "9684011614",
         email_id: document.getElementById('semco-po-email')?.value || "umesh.p@semcogroups.com",
         amendment_no: document.getElementById('semco-po-amend-no')?.value || "-",
@@ -551,7 +859,8 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
         inspection_terms: document.getElementById('semco-term-inspection')?.value || "Before Dispatch",
         delivery_terms: document.getElementById('semco-term-delivery')?.value || "Door Delivery",
         remarks: document.getElementById('semco-term-remarks')?.value || "",
-        action: actionType,
+        attachments: document.getElementById('semco-po-attachments')?.value || "Technical Specifications Annexure-A.pdf",
+        action: isEditing ? (actionType === 'SAVE_DRAFT' ? 'SAVE_DRAFT' : 'UPDATE') : actionType,
         prepared_by: {
             name: "Mr. Umesh H. Patil",
             email: "poprep@semco.com",
@@ -571,7 +880,10 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
             let titleMsg = "PO Saved";
             let bodyMsg = `Purchase Order #${saved.po_number} saved.`;
 
-            if (actionType === 'SUBMIT') {
+            if (isEditing) {
+                titleMsg = "✅ Purchase Order Updated Live";
+                bodyMsg = `Purchase Order #${saved.po_number} for ${saved.vendor_name} (Grand Total: ₹${(saved.grand_total || saved.total_amount || 0).toLocaleString('en-IN')}) has been updated live with your changes!`;
+            } else if (actionType === 'SUBMIT') {
                 titleMsg = "🚀 PO Submitted for Approval";
                 bodyMsg = `Purchase Order #${saved.po_number} for ${saved.vendor_name} (Grand Total: ₹${(saved.grand_total || saved.total_amount || 0).toLocaleString('en-IN')}) submitted for approval! You can inspect, view PDF, or authorize it directly from the table below.`;
             } else if (actionType === 'SAVE_DRAFT') {
@@ -585,6 +897,23 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
             if (saved && (saved.po_number || poNo)) {
                 updateLastTakenPODisplay(saved.po_number || poNo);
             }
+
+            // Clear editing state and reset UI buttons
+            currentEditingPOId = null;
+            window.currentEditingPOId = null;
+            const editBanner = document.getElementById('semco-po-editing-banner');
+            if (editBanner) editBanner.style.display = 'none';
+            const btnCancel = document.getElementById('semco-po-btn-cancel-edit');
+            if (btnCancel) btnCancel.style.display = 'none';
+            const btnDup = document.getElementById('semco-po-btn-duplicate');
+            if (btnDup) btnDup.style.display = 'none';
+            const btnDraft = document.getElementById('semco-po-btn-draft');
+            if (btnDraft) btnDraft.textContent = '💾 Save as Draft PO';
+            const btnSubmit = document.getElementById('semco-po-btn-submit');
+            if (btnSubmit) btnSubmit.textContent = '🚀 Submit PO for Approval';
+            const editSelect = document.getElementById('semco-po-edit-select');
+            if (editSelect) editSelect.value = '';
+
             if (typeof fetchPurchaseOrders === 'function') fetchPurchaseOrders();
             if (typeof switchPOSubTab === 'function') switchPOSubTab('repo');
         } else {
@@ -634,10 +963,11 @@ function renderPOTables(pos) {
                     <td><strong>${p.vendor_name || p.vendor_client_name}</strong></td>
                     <td>${p.po_date}</td>
                     <td><span class="badge" style="background:#FFFBEB; color:#92400E; border:1px solid #FDE68A;">${p.payment_terms || '30 Days'}</span></td>
-                    <td><strong style="color: #15803D;">₹ ${(p.grand_total || p.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
+                    <td><strong style="color: #047857; font-size: 0.96rem; font-weight: 800; background: #ECFDF5; border: 1.5px solid #6EE7B7; padding: 4px 10px; border-radius: 6px; display: inline-block;">₹ ${(p.grand_total || p.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2})}</strong></td>
                     <td><span class="badge ${badgeClass}">${statusLabel}</span></td>
                     <td>
                         <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                            <button type="button" class="btn btn-outline btn-sm" style="border-color: #EA580C; color: #EA580C; font-weight: 700; background: #FFF7ED;" onclick="loadPOForEditing('${p.id}')">✏️ Edit Entire PO</button>
                             <button type="button" class="btn btn-outline btn-sm" style="border-color: #1E3A8A; color: #1E3A8A; font-weight: 600;" onclick="openSEMCOPOPrintView('${p.id}')">📄 View & Print PO</button>
                             ${p.status !== 'APPROVED' ? `<button type="button" class="btn btn-outline btn-sm" style="border-color: #059669; color: #059669; font-weight: 700;" onclick="approvePO('${p.id}')">✅ Quick Approve</button>` : ''}
                             <button type="button" class="btn btn-outline btn-sm" style="border-color: #059669; color: #059669;" onclick="openPODeepAuditModal('${p.po_number}')">💳 Audit Payments</button>
@@ -833,7 +1163,10 @@ window.openSEMCOPOPrintView = function(poId) {
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>Freight:</span><span>₹ ${poFreight.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>P&F:</span><span>₹ ${poPF.toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
                     <div style="display:flex; justify-content:space-between; padding:4px 8px; border-bottom:1px solid #CBD5E1;"><span>${modalTaxLabel}:</span><span>₹ ${(po.igst_amount !== undefined ? po.igst_amount : 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</span></div>
-                    <div style="display:flex; justify-content:space-between; padding:6px 8px; background:#1E3A8A; color:white;"><strong>Grand Total:</strong><strong>₹ ${(po.grand_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; background: linear-gradient(135deg, #065F46 0%, #059669 100%); color:white; border-radius: 6px; border: 2px solid #34D399; margin-top: 4px;">
+                        <strong style="font-size: 1.05rem; color: #FFFFFF;">Grand Total:</strong>
+                        <strong style="font-size: 1.45rem; color: #FEF08A; font-weight: 900; letter-spacing: 0.5px;">₹ ${(po.grand_total || po.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</strong>
+                    </div>
                 </div>
             </div>
 
@@ -858,8 +1191,9 @@ window.openSEMCOPOPrintView = function(poId) {
             </div>
         </div>
 
-        <div class="po-print-hide" style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end;">
+        <div class="po-print-hide" style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
             <button type="button" class="btn btn-outline" onclick="closeSEMCOPOPreviewModal()">Close</button>
+            <button type="button" class="btn btn-outline" style="border-color: #EA580C; color: #EA580C; font-weight: 700; background: #FFF7ED;" onclick="closeSEMCOPOPreviewModal(); loadPOForEditing('${po.id}');">✏️ Edit Entire PO</button>
             <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print / Save as PDF</button>
             ${po.status === 'SUBMITTED_FOR_APPROVAL' ? `<button type="button" class="btn btn-success" onclick="approvePO('${po.id}'); closeSEMCOPOPreviewModal();">✅ Authorize & Approve PO</button>` : ''}
         </div>

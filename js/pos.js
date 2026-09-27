@@ -1046,16 +1046,79 @@ window.deletePurchaseOrder = async function(poId) {
     }
 };
 
+// Generate clean, standardized filename for saving/printing PO:
+// e.g. "PO - 26-27 - 111 - Vendor Name" matching SEMCO folder conventions
+window.getPOPrintFileName = function(po) {
+    if (!po) return 'PO - Document';
+
+    // 1. PO Number formatting
+    let rawPo = String(po.po_number || '').trim();
+
+    // Strip leading "PO", "PO -", "PO-" if already present
+    rawPo = rawPo.replace(/^PO\s*[-–—:]*\s*/i, '').trim();
+
+    // In Windows filenames, '/' is strictly illegal and causes save errors or broken paths.
+    // In SEMCO's repository (e.g. 'PO - 26-27 - 201 - ADVANCE NDT SERVICES'),
+    // the financial year '26/27' is formatted as '26-27'.
+    const fyMatch = rawPo.match(/^(\d{2,4})\s*[\/\\-]\s*(\d{2,4})\s*[-–—\/\\]*\s*(.*)$/);
+    if (fyMatch) {
+        const fy = `${fyMatch[1]}-${fyMatch[2]}`;
+        const rest = fyMatch[3].trim().replace(/^[-–—\/\\]+\s*/, '');
+        rawPo = rest ? `${fy} - ${rest}` : fy;
+    } else if (/^\d+$/.test(rawPo)) {
+        rawPo = `26-27 - ${rawPo}`;
+    } else {
+        rawPo = rawPo.replace(/[\/\\]+/g, '-').trim();
+    }
+
+    // 2. Vendor Name formatting
+    const rawVendor = String(po.vendor_name || po.vendor_client_name || '').trim();
+    // Sanitize illegal Windows filename characters: \ / : * ? " < > |
+    const cleanVendor = rawVendor
+        .replace(/[\/\\:*?"<>|]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // 3. Assemble: "PO - 26-27 - 111 - Vendor Name"
+    const parts = ['PO'];
+    if (rawPo) parts.push(rawPo);
+    if (cleanVendor) parts.push(cleanVendor);
+
+    return parts.join(' - ');
+};
+
+// Dedicated PO print handler that ensures document.title is set to the exact PO filename
+window.printSEMCOPO = function(poId) {
+    const po = currentPurchaseOrders.find(p => p.id === poId || p.po_number === poId) || window._currentViewingPO;
+    if (po) {
+        document.title = window.getPOPrintFileName(po);
+    }
+    setTimeout(() => {
+        window.print();
+    }, 50);
+};
+
 // Printable SEMCO Formatted PO Document Modal
 window.openSEMCOPOPrintView = function(poId) {
-    const po = currentPurchaseOrders.find(p => p.id === poId);
+    const po = currentPurchaseOrders.find(p => p.id === poId || p.po_number === poId);
     if (!po) return;
+
+    window._currentViewingPO = po;
 
     const modal = document.getElementById("semco-po-preview-modal");
     const modalTitle = document.getElementById("semco-po-modal-title");
     const modalBody = document.getElementById("semco-po-modal-body");
 
     if (!modal || !modalBody) return;
+
+    // Cache original application document title
+    if (!window._defaultAppTitle) {
+        window._defaultAppTitle = document.title || "SEMCO SCM — GateFlow Receival & Dispatch";
+    }
+
+    const formattedFileName = window.getPOPrintFileName(po);
+    // Set document title so browser / WPS Print to PDF defaults suggested filename correctly
+    document.title = formattedFileName;
 
     if (modalTitle) modalTitle.textContent = `Official SEMCO Purchase Order #${po.po_number}`;
 
@@ -1191,11 +1254,16 @@ window.openSEMCOPOPrintView = function(poId) {
             </div>
         </div>
 
-        <div class="po-print-hide" style="margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
-            <button type="button" class="btn btn-outline" onclick="closeSEMCOPOPreviewModal()">Close</button>
-            <button type="button" class="btn btn-outline" style="border-color: #EA580C; color: #EA580C; font-weight: 700; background: #FFF7ED;" onclick="closeSEMCOPOPreviewModal(); loadPOForEditing('${po.id}');">✏️ Edit Entire PO</button>
-            <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ Print / Save as PDF</button>
-            ${po.status === 'SUBMITTED_FOR_APPROVAL' ? `<button type="button" class="btn btn-success" onclick="approvePO('${po.id}'); closeSEMCOPOPreviewModal();">✅ Authorize & Approve PO</button>` : ''}
+        <div class="po-print-hide" style="margin-top: 16px; display: flex; gap: 10px; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+            <div style="font-size: 0.82rem; color: #475569; background: #F1F5F9; border: 1px solid #CBD5E1; padding: 6px 12px; border-radius: 6px;">
+                💾 <strong>Save Filename:</strong> <code style="color: #1E3A8A; font-weight: 700;">${formattedFileName}.pdf</code>
+            </div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button type="button" class="btn btn-outline" onclick="closeSEMCOPOPreviewModal()">Close</button>
+                <button type="button" class="btn btn-outline" style="border-color: #EA580C; color: #EA580C; font-weight: 700; background: #FFF7ED;" onclick="closeSEMCOPOPreviewModal(); loadPOForEditing('${po.id}');">✏️ Edit Entire PO</button>
+                <button type="button" class="btn btn-primary" onclick="printSEMCOPO('${po.id}')" title="Print or Save as PDF (${formattedFileName}.pdf)">🖨️ Print / Save as PDF</button>
+                ${po.status === 'SUBMITTED_FOR_APPROVAL' ? `<button type="button" class="btn btn-success" onclick="approvePO('${po.id}'); closeSEMCOPOPreviewModal();">✅ Authorize & Approve PO</button>` : ''}
+            </div>
         </div>
     `;
 
@@ -1206,7 +1274,44 @@ window.openSEMCOPOPrintView = function(poId) {
 window.closeSEMCOPOPreviewModal = function() {
     const modal = document.getElementById("semco-po-preview-modal");
     if (modal) modal.style.display = "none";
+    window._currentViewingPO = null;
+    document.title = window._defaultAppTitle || 'SEMCO SCM — GateFlow Receival & Dispatch';
 };
+
+// Global event listeners to guarantee accurate PDF filenames during print & cleanup afterwards
+window.addEventListener('beforeprint', () => {
+    const modal = document.getElementById("semco-po-preview-modal");
+    if (modal && modal.style.display !== "none" && window._currentViewingPO) {
+        document.title = window.getPOPrintFileName(window._currentViewingPO);
+    }
+});
+
+window.addEventListener('afterprint', () => {
+    const modal = document.getElementById("semco-po-preview-modal");
+    if (!modal || modal.style.display === "none") {
+        document.title = window._defaultAppTitle || 'SEMCO SCM — GateFlow Receival & Dispatch';
+    }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById("semco-po-preview-modal");
+        if (modal && modal.style.display !== "none") {
+            window.closeSEMCOPOPreviewModal();
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById("semco-po-preview-modal");
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                window.closeSEMCOPOPreviewModal();
+            }
+        });
+    }
+});
 
 // --- Persistent PO Number Tracking & Sequencing ---
 function getNextPONumber(poNumber) {

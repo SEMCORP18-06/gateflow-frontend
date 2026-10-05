@@ -1105,3 +1105,42 @@ tr:hover {
     }
 }
 
+/* ==========================================================================
+   PO Line Items Multi-Line Description & Table Layout Enhancements
+   ========================================================================== */
+.po-desc-textarea {
+    width: 100% !important;
+    min-width: 250px;
+    min-height: 44px;
+    padding: 7px 10px;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: #0F172A;
+    background-color: #FFFFFF;
+    border: 1.5px solid #CBD5E1;
+    border-radius: 6px;
+    resize: vertical;
+    white-space: pre-wrap;
+    word-break: break-word;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.po-desc-textarea:focus {
+    border-color: #2563EB !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+    background-color: #FAFCFF !important;
+}
+
+#semco-po-items-table tbody tr {
+    vertical-align: top;
+}
+
+#semco-po-items-table tbody td {
+    vertical-align: top;
+    padding: 8px 6px;
+}
+
+

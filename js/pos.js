@@ -568,6 +568,27 @@ window.switchPOSubTab = function(subKey) {
     }
 };
 
+// Safely escape HTML for form inputs, textareas and tables
+function escapeHtml(str) {
+    if (str === undefined || str === null) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+window.escapeHtml = escapeHtml;
+
+// Auto-expand textarea based on content (multi-line description)
+function autoResizePOLineTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    const targetHeight = Math.max(44, el.scrollHeight);
+    el.style.height = targetHeight + 'px';
+}
+window.autoResizePOLineTextarea = autoResizePOLineTextarea;
+
 // Render Line Items in SEMCO PO Builder Form
 function renderPOLineItemsTable() {
     const tbody = document.getElementById('semco-po-items-tbody');
@@ -586,14 +607,17 @@ function renderPOLineItemsTable() {
         item.amount = numQty * numRate;
 
         const tr = document.createElement('tr');
+        tr.style.verticalAlign = 'top';
         tr.innerHTML = `
-            <td style="text-align: center; font-weight: 700; color: #1E3A8A;">${item.line_no}</td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.goods_description || ''}" placeholder="Description of goods" onchange="updatePOLineItem(${index}, 'goods_description', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.project_no || ''}" placeholder="Project No" onchange="updatePOLineItem(${index}, 'project_no', this.value)"></td>
-            <td><input type="text" class="form-control form-control-sm" value="${item.hsn_sac || ''}" placeholder="HSN" onchange="updatePOLineItem(${index}, 'hsn_sac', this.value)"></td>
-            <td><input type="number" min="1" step="any" class="form-control form-control-sm po-qty-input" value="${qVal}" placeholder="1" onfocus="this.select()" oninput="updatePOLineItem(${index}, 'qty', this.value)"></td>
-            <td>
-                <select class="form-control form-control-sm po-uom-select" onchange="updatePOLineItem(${index}, 'uom', this.value)">
+            <td style="text-align: center; font-weight: 700; color: #1E3A8A; vertical-align: top; padding-top: 10px;">${item.line_no}</td>
+            <td style="vertical-align: top;">
+                <textarea class="form-control form-control-sm po-desc-textarea" rows="2" placeholder="Description of goods (Press Enter for new line)" style="resize: vertical; min-height: 44px; width: 100%; min-width: 250px; line-height: 1.45; padding: 7px 10px; font-size: 0.86rem; font-family: inherit; white-space: pre-wrap; word-break: break-word;" oninput="updatePOLineItem(${index}, 'goods_description', this.value); autoResizePOLineTextarea(this);" onkeydown="if(event.key === 'Enter') { event.stopPropagation(); setTimeout(() => autoResizePOLineTextarea(this), 0); }" onchange="updatePOLineItem(${index}, 'goods_description', this.value)">${escapeHtml(item.goods_description || '')}</textarea>
+            </td>
+            <td style="vertical-align: top;"><input type="text" class="form-control form-control-sm" value="${escapeHtml(item.project_no || '')}" placeholder="Project No" onchange="updatePOLineItem(${index}, 'project_no', this.value)" style="margin-top: 2px;"></td>
+            <td style="vertical-align: top;"><input type="text" class="form-control form-control-sm" value="${escapeHtml(item.hsn_sac || '')}" placeholder="HSN" onchange="updatePOLineItem(${index}, 'hsn_sac', this.value)" style="margin-top: 2px;"></td>
+            <td style="vertical-align: top;"><input type="number" min="1" step="any" class="form-control form-control-sm po-qty-input" value="${qVal}" placeholder="1" onfocus="this.select()" oninput="updatePOLineItem(${index}, 'qty', this.value)" style="margin-top: 2px;"></td>
+            <td style="vertical-align: top;">
+                <select class="form-control form-control-sm po-uom-select" onchange="updatePOLineItem(${index}, 'uom', this.value)" style="margin-top: 2px;">
                     <option value="Nos" ${item.uom === 'Nos' ? 'selected' : ''}>Nos</option>
                     <option value="Kg" ${item.uom === 'Kg' ? 'selected' : ''}>Kg</option>
                     <option value="Mtr" ${item.uom === 'Mtr' ? 'selected' : ''}>Mtr</option>
@@ -602,9 +626,9 @@ function renderPOLineItemsTable() {
                     <option value="Lot" ${item.uom === 'Lot' ? 'selected' : ''}>Lot</option>
                 </select>
             </td>
-            <td><input type="number" step="any" min="0" class="form-control form-control-sm po-rate-input" value="${rVal}" placeholder="0.00" onfocus="this.select()" onkeydown="if(event.key==='Escape'){this.value='';updatePOLineItem(${index},'base_rate','');}" oninput="updatePOLineItem(${index}, 'base_rate', this.value)"></td>
-            <td>
-                <select class="form-control form-control-sm po-gst-select" onchange="updatePOLineItem(${index}, 'gst_percent', this.value)">
+            <td style="vertical-align: top;"><input type="number" step="any" min="0" class="form-control form-control-sm po-rate-input" value="${rVal}" placeholder="0.00" onfocus="this.select()" onkeydown="if(event.key==='Escape'){this.value='';updatePOLineItem(${index},'base_rate','');}" oninput="updatePOLineItem(${index}, 'base_rate', this.value)" style="margin-top: 2px;"></td>
+            <td style="vertical-align: top;">
+                <select class="form-control form-control-sm po-gst-select" onchange="updatePOLineItem(${index}, 'gst_percent', this.value)" style="margin-top: 2px;">
                     <option value="18" ${item.gst_percent == 18 ? 'selected' : ''}>18%</option>
                     <option value="12" ${item.gst_percent == 12 ? 'selected' : ''}>12%</option>
                     <option value="5" ${item.gst_percent == 5 ? 'selected' : ''}>5%</option>
@@ -612,13 +636,19 @@ function renderPOLineItemsTable() {
                     <option value="0" ${item.gst_percent == 0 ? 'selected' : ''}>0%</option>
                 </select>
             </td>
-            <td style="text-align: right; font-weight: 700; color: #1E3A8A;">₹ ${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-            <td style="text-align: center;">
+            <td style="text-align: right; font-weight: 700; color: #1E3A8A; vertical-align: top; padding-top: 10px;">₹ ${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+            <td style="text-align: center; vertical-align: top; padding-top: 8px;">
                 <button type="button" class="btn btn-outline btn-sm" style="border:none; color:#EF4444; padding:2px 6px; font-size: 1rem;" title="Delete row" onclick="deletePOLineItemRow(${index})">🗑️</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
+
+    // Auto-resize all textareas based on initial/loaded text
+    setTimeout(() => {
+        const textareas = tbody.querySelectorAll('textarea.po-desc-textarea');
+        textareas.forEach(ta => autoResizePOLineTextarea(ta));
+    }, 10);
 
     recalculateSEMCOTotals();
 }
@@ -826,6 +856,14 @@ window.saveSEMCOPO = async function(actionType = 'SUBMIT') {
     const incidentalTax = (freight + pfCharges) * effectiveGstRate;
     const finalGstAmount = totalTaxAmount + incidentalTax;
     const grandTotal = subTotal + freight + pfCharges + finalGstAmount;
+
+    // Sync any unblurred textareas directly from the DOM before constructing payload
+    const descTextareas = document.querySelectorAll('#semco-po-items-tbody textarea.po-desc-textarea');
+    descTextareas.forEach((ta, idx) => {
+        if (poLineItems[idx]) {
+            poLineItems[idx].goods_description = ta.value;
+        }
+    });
 
     const isEditing = Boolean(currentEditingPOId);
     const payload = {
@@ -1161,17 +1199,22 @@ window.openSEMCOPOPrintView = function(poId) {
         const rVal = (item.base_rate !== undefined && item.base_rate !== null && item.base_rate !== '') ? item.base_rate : 0;
         const lineAmt = item.amount !== undefined ? item.amount : ((parseFloat(qVal) || 0) * (parseFloat(rVal) || 0));
 
+        const formattedDesc = (item.goods_description || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
         itemsRows += `
-            <tr>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.line_no}</td>
-                <td style="padding:6px; border:1px solid #CBD5E1;">${item.goods_description}</td>
-                <td style="padding:6px; border:1px solid #CBD5E1;">${item.project_no || ''}</td>
-                <td style="padding:6px; border:1px solid #CBD5E1;">${item.hsn_sac || ''}</td>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${qVal}</td>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${item.uom || 'Nos'}</td>
-                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1;">₹ ${(parseFloat(rVal) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
-                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1;">${itemGst}%</td>
-                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1; font-weight:700;">₹ ${(parseFloat(lineAmt) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+            <tr style="vertical-align: top;">
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${item.line_no}</td>
+                <td style="padding:6px; border:1px solid #CBD5E1; vertical-align: top; white-space: pre-wrap; word-break: break-word; line-height: 1.35;">${formattedDesc}</td>
+                <td style="padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${item.project_no || ''}</td>
+                <td style="padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${item.hsn_sac || ''}</td>
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${qVal}</td>
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${item.uom || 'Nos'}</td>
+                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1; vertical-align: top;">₹ ${(parseFloat(rVal) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
+                <td style="text-align:center; padding:6px; border:1px solid #CBD5E1; vertical-align: top;">${itemGst}%</td>
+                <td style="text-align:right; padding:6px; border:1px solid #CBD5E1; vertical-align: top; font-weight:700;">₹ ${(parseFloat(lineAmt) || 0).toLocaleString('en-IN', {minimumFractionDigits:2})}</td>
             </tr>
         `;
     });

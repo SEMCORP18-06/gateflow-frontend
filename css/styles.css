@@ -334,6 +334,19 @@ main {
     transform: translateY(-1px);
 }
 
+.btn-danger {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%) !important;
+    color: #FFFFFF !important;
+    border: 1px solid #DC2626 !important;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.25);
+}
+
+.btn-danger:hover, .btn-danger:active {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.35);
+}
+
 .btn-outline {
     background: #FFFFFF;
     border: 1px solid var(--border-color-subtle);

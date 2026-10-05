@@ -138,25 +138,63 @@ function renderReceivingTable(records) {
 }
 
 window.deleteReceivingRecord = async function(recordId) {
+    if (!recordId) {
+        console.error("deleteReceivingRecord: Missing recordId");
+        return;
+    }
+
     const confirmed = await window.showConfirmModal({
         icon: "🗑️",
         title: "Delete Invoice Record",
         message: "Are you sure you want to permanently delete this invoice record from the repository?",
         proceedText: "🗑️ Delete Permanently",
-        proceedClass: "btn-outline"
+        proceedClass: "btn-danger"
     });
     if (!confirmed) return;
+
+    // Optimistically update local array so UI updates instantly
+    const prevRecords = [...currentReceivingRecords];
+    currentReceivingRecords = currentReceivingRecords.filter(r => String(r.id) !== String(recordId) && String(r.invoice_number) !== String(recordId));
+    
+    // Re-render table (respecting any active filters)
+    if (typeof applySection2PayablesFilter === 'function' && 
+        (document.getElementById("sec2-filter-inv")?.value || 
+         document.getElementById("sec2-filter-date")?.value || 
+         document.getElementById("sec2-filter-po")?.value || 
+         (document.getElementById("sec2-filter-due") && document.getElementById("sec2-filter-due").value !== 'ALL'))) {
+        applySection2PayablesFilter();
+    } else {
+        renderReceivingTable(currentReceivingRecords);
+    }
+    if (typeof renderCalendar === 'function') renderCalendar('ALL');
 
     try {
         const res = await fetch(`/api/receiving/${recordId}`, { method: "DELETE" });
         if (res.ok) {
-            fetchReceivingRecords();
-            fetchNotifications();
+            if (typeof fetchReceivingAuditLogs === 'function') fetchReceivingAuditLogs();
+            if (typeof fetchNotifications === 'function') fetchNotifications();
+            if (window.showAlertModal) {
+                window.showAlertModal({ 
+                    icon: "🗑️", 
+                    title: "Invoice Record Deleted", 
+                    message: "Invoice record has been permanently deleted from the repository." 
+                });
+            }
         } else {
-            window.showAlertModal({ icon: "❌", title: "Deletion Failed", message: "Could not delete invoice record." });
+            console.error("Delete failed on server with status:", res.status);
+            currentReceivingRecords = prevRecords;
+            renderReceivingTable(currentReceivingRecords);
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "❌", title: "Deletion Failed", message: "Server could not delete invoice record." });
+            }
         }
     } catch (err) {
         console.error("Delete record error:", err);
+        currentReceivingRecords = prevRecords;
+        renderReceivingTable(currentReceivingRecords);
+        if (window.showAlertModal) {
+            window.showAlertModal({ icon: "❌", title: "Network Error", message: "Could not connect to server to delete record." });
+        }
     }
 };
 
@@ -1103,24 +1141,43 @@ window.previewChallanRecord = function(challanId) {
 };
 
 window.deleteDeliveryChallan = async function(challanId) {
+    if (!challanId) return;
+
     const confirmed = await window.showConfirmModal({
         icon: "🗑️",
         title: "Delete Delivery Challan",
-        message: "Are you sure you want to delete this delivery challan record?",
+        message: "Are you sure you want to permanently delete this delivery challan record from the repository?",
         proceedText: "🗑️ Delete Permanently",
-        proceedClass: "btn-outline"
+        proceedClass: "btn-danger"
     });
     if (!confirmed) return;
+
+    const prevChallans = typeof currentChallans !== 'undefined' ? [...currentChallans] : [];
+    if (typeof currentChallans !== 'undefined') {
+        currentChallans = currentChallans.filter(c => String(c.id) !== String(challanId) && String(c.challan_number) !== String(challanId));
+        if (typeof renderChallansTable === 'function') renderChallansTable(currentChallans);
+    }
 
     try {
         const res = await fetch(`/api/receiving/challans/${challanId}`, { method: "DELETE" });
         if (res.ok) {
-            fetchDeliveryChallans();
-            fetchNotifications();
+            if (typeof fetchDeliveryChallans === 'function') fetchDeliveryChallans();
+            if (typeof fetchNotifications === 'function') fetchNotifications();
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "🗑️", title: "Challan Deleted", message: "Delivery challan record has been permanently deleted from the repository." });
+            }
         } else {
-            window.showAlertModal({ icon: "❌", title: "Deletion Failed", message: "Could not delete delivery challan." });
+            if (typeof currentChallans !== 'undefined') {
+                currentChallans = prevChallans;
+                if (typeof renderChallansTable === 'function') renderChallansTable(currentChallans);
+            }
+            window.showAlertModal({ icon: "❌", title: "Deletion Failed", message: "Server could not delete delivery challan." });
         }
     } catch (err) {
+        if (typeof currentChallans !== 'undefined') {
+            currentChallans = prevChallans;
+            if (typeof renderChallansTable === 'function') renderChallansTable(currentChallans);
+        }
         window.showAlertModal({ icon: "❌", title: "Deletion Error", message: err.message });
     }
 };

@@ -568,16 +568,24 @@ window.showConfirmModal = function({ icon = "⚠️", title = "Confirm Action", 
         if (iconEl) iconEl.innerText = icon;
         if (titleEl) titleEl.innerText = title;
         if (bodyEl) bodyEl.innerText = message;
+        if (cancelBtn) {
+            cancelBtn.style.display = "";
+        }
         if (proceedBtn) {
             proceedBtn.innerText = proceedText;
             proceedBtn.className = `btn ${proceedClass}`;
+            proceedBtn.style.width = "";
         }
 
         backdrop.style.display = "flex";
 
         const cleanup = () => {
             backdrop.style.display = "none";
-            if (proceedBtn) proceedBtn.onclick = null;
+            if (cancelBtn) cancelBtn.style.display = "";
+            if (proceedBtn) {
+                proceedBtn.style.width = "";
+                proceedBtn.onclick = null;
+            }
             if (cancelBtn) cancelBtn.onclick = null;
         };
 

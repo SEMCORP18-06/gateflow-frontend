@@ -1031,18 +1031,49 @@ window.rejectPO = async function(poId) {
 };
 
 window.deletePurchaseOrder = async function(poId) {
-    if (!confirm("Are you sure you want to delete this Purchase Order?")) return;
+    if (!poId) return;
+
+    let confirmed = false;
+    if (window.showConfirmModal) {
+        confirmed = await window.showConfirmModal({
+            icon: "🗑️",
+            title: "Delete Purchase Order",
+            message: "Are you sure you want to permanently delete this Purchase Order from the repository?",
+            proceedText: "🗑️ Delete Permanently",
+            proceedClass: "btn-danger"
+        });
+    } else {
+        confirmed = confirm("Are you sure you want to permanently delete this Purchase Order?");
+    }
+    if (!confirmed) return;
+
+    const prevPOs = [...currentPurchaseOrders];
+    currentPurchaseOrders = currentPurchaseOrders.filter(p => String(p.id) !== String(poId) && String(p.po_number) !== String(poId));
+    renderPOTables(currentPurchaseOrders);
+
     try {
         const res = await fetch(`/api/pos/${poId}`, { method: "DELETE" });
         if (res.ok) {
-            currentPurchaseOrders = currentPurchaseOrders.filter(p => p.id !== poId);
-            renderPOTables(currentPurchaseOrders);
             switchPOSubTab('repo');
-            window.showAlertModal({ icon: "🗑️", title: "PO Deleted", message: "Purchase Order has been removed." });
-            fetchPurchaseOrders();
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "🗑️", title: "PO Deleted", message: "Purchase Order has been permanently deleted from the repository." });
+            }
+            if (typeof fetchPurchaseOrders === 'function') fetchPurchaseOrders();
+        } else {
+            console.error("Delete PO failed on server with status:", res.status);
+            currentPurchaseOrders = prevPOs;
+            renderPOTables(currentPurchaseOrders);
+            if (window.showAlertModal) {
+                window.showAlertModal({ icon: "❌", title: "Deletion Failed", message: "Server could not delete Purchase Order." });
+            }
         }
     } catch (err) {
         console.error("Delete PO error:", err);
+        currentPurchaseOrders = prevPOs;
+        renderPOTables(currentPurchaseOrders);
+        if (window.showAlertModal) {
+            window.showAlertModal({ icon: "❌", title: "Network Error", message: "Could not connect to server to delete Purchase Order." });
+        }
     }
 };
 
